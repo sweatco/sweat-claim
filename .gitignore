@@ -19,6 +19,7 @@ node_modules
 # production
 /build
 /contract/target
+/target
 
 # misc
 .DS_Store

@@ -1,0 +1,11 @@
+[workspace]
+
+resolver = "2"
+
+default-members = ["contract"]
+members = ["contract", "integration-tests"]
+
+[workspace.dependencies]
+fake = "2.8.0"
+rand = "0.8.5"
+near-sdk = "4.1.1"

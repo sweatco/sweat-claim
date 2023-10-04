@@ -2,21 +2,25 @@
 name = "integration-tests"
 version = "1.0.0"
 publish = false
-edition = "2018"
+edition = "2021"
+
+[lib]
+name = "integration_tests"
 
 [dev-dependencies]
-anyhow = "1.0"
-borsh = "0.9"
-maplit = "1.0"
+near-sdk = { workspace = true }
 near-units = "0.2.0"
+
+anyhow = "1.0"
+borsh = "0.10.3"
+maplit = "1.0"
 # arbitrary_precision enabled for u128 types that workspaces requires for Balance types
-serde_json = { version = "1.0", features = ["arbitrary_precision"] }
-tokio = { version = "1.18.1", features = ["full"] }
-tracing = "0.1"
+serde_json = { version = "1.0.107", features = ["arbitrary_precision"] }
+tokio = { version = "1.32.0", features = ["full"] }
+tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
-workspaces = "0.6.0"
+workspaces = "0.7.0"
 pkg-config = "0.3.1"
 
-[[example]]
-name = "integration-tests"
-path = "src/tests.rs"
+[dependencies]
+async-trait = "0.1.73"

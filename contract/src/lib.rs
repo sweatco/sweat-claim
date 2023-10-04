@@ -1,7 +1,8 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::json_types::U128;
+use near_sdk::serde::Serialize;
 use near_sdk::store::{LookupMap, UnorderedSet, Vector};
-use near_sdk::{env, near_bindgen, require, AccountId, BorshStorageKey};
+use near_sdk::{env, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault};
 
 use crate::StorageKey::AccrualsEntry;
 
@@ -14,27 +15,16 @@ type TokensAmount = u128;
 type Duration = u32; // Period in seconds
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    // accounts: LookupMap<AccountId, BalanceRecord>,
+    token_account_id: AccountId,
+
     oracles: UnorderedSet<AccountId>,
     claim_period: Duration, // Period in milliseconds during which tokens are locked after claim
     burn_period: Duration,  // Time in milliseconds after that unclaimed tokens are burnt
 
     accruals: LookupMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
     accounts: LookupMap<AccountId, AccountRecord>,
-}
-
-impl Default for Contract {
-    fn default() -> Self {
-        Self {
-            accounts: LookupMap::new(StorageKey::Accounts),
-            accruals: LookupMap::new(StorageKey::Accruals),
-            oracles: UnorderedSet::new(StorageKey::Oracles),
-            claim_period: INITIAL_CLAIM_PERIOD_MS,
-            burn_period: INITIAL_BURN_PERIOD_MS,
-        }
-    }
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -47,6 +37,21 @@ enum StorageKey {
 
 #[near_bindgen]
 impl Contract {
+    #[init]
+    #[private]
+    pub fn init(token_account_id: AccountId) -> Self {
+        Self {
+            token_account_id,
+
+            accounts: LookupMap::new(StorageKey::Accounts),
+            accruals: LookupMap::new(StorageKey::Accruals),
+            oracles: UnorderedSet::new(StorageKey::Oracles),
+
+            claim_period: INITIAL_CLAIM_PERIOD_MS,
+            burn_period: INITIAL_BURN_PERIOD_MS,
+        }
+    }
+
     #[private]
     pub fn add_oracle(&mut self, account_id: AccountId) {
         require!(self.oracles.insert(account_id.clone()), "Already exists");
@@ -130,6 +135,13 @@ impl Contract {
     }
 }
 
+#[derive(Serialize)]
+#[serde(
+    crate = "near_sdk::serde",
+    tag = "type",
+    content = "data",
+    rename_all = "snake_case"
+)]
 pub enum ClaimAvailabilityView {
     Available(),
     Unavailable((UnixTimestamp, Duration)),
