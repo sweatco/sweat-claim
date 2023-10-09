@@ -1243,6 +1243,7 @@ dependencies = [
  "async-trait",
  "borsh 0.10.3",
  "maplit",
+ "model",
  "near-sdk",
  "near-units",
  "pkg-config",
@@ -1409,6 +1410,13 @@ dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys",
+]
+
+[[package]]
+name = "model"
+version = "0.1.0"
+dependencies = [
+ "near-sdk",
 ]
 
 [[package]]
@@ -2795,6 +2803,7 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 name = "sweat_claim"
 version = "1.0.0"
 dependencies = [
+ "model",
  "near-sdk",
  "uint",
 ]

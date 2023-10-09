@@ -24,3 +24,5 @@ pkg-config = "0.3.1"
 
 [dependencies]
 async-trait = "0.1.73"
+
+model = { workspace = true }

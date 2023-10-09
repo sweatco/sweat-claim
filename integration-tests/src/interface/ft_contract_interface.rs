@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use serde_json::json;
 use workspaces::{Account, AccountId, Contract};
@@ -14,6 +14,8 @@ impl FtContract for Contract {}
 pub(crate) trait FtContractInterface {
     async fn init(&self) -> anyhow::Result<()>;
 
+    async fn add_oracle(&self, account_id: &AccountId) -> anyhow::Result<()>;
+
     async fn ft_balance_of(&self, user: &Account) -> anyhow::Result<U128>;
 
     async fn mint_for_user(&self, user: &Account, amount: u128) -> anyhow::Result<()>;
@@ -27,6 +29,15 @@ pub(crate) trait FtContractInterface {
         amount: u128,
         msg: String,
     ) -> anyhow::Result<()>;
+
+    async fn defer_batch(
+        &self,
+        manager: &Account,
+        steps_batch: Vec<(AccountId, u16)>,
+        holding_account_id: AccountId,
+    ) -> anyhow::Result<()>;
+
+    async fn formula(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<U128>;
 }
 
 #[async_trait]
@@ -38,6 +49,24 @@ impl FtContractInterface for Contract {
             .call("new")
             .args_json(json!({
                 "postfix": ".u.sweat.testnet",
+            }))
+            .max_gas()
+            .transact()
+            .await?
+            .into_result();
+
+        println!("Result: {:?}", result);
+
+        Ok(())
+    }
+
+    async fn add_oracle(&self, account_id: &AccountId) -> anyhow::Result<()> {
+        println!("▶️ Add oracle: {account_id}");
+
+        let result = self
+            .call("add_oracle")
+            .args_json(json!({
+                "account_id": account_id,
             }))
             .max_gas()
             .transact()
@@ -131,5 +160,48 @@ impl FtContractInterface for Contract {
         }
 
         Ok(())
+    }
+
+    async fn defer_batch(
+        &self,
+        manager: &Account,
+        steps_batch: Vec<(AccountId, u16)>,
+        holding_account_id: AccountId,
+    ) -> anyhow::Result<()> {
+        println!("▶️ Mint (for {holding_account_id}) and defer: {:?}", steps_batch);
+
+        let args = json!({
+            "steps_batch": steps_batch,
+            "holding_account_id": holding_account_id,
+        });
+
+        let result = manager
+            .call(self.id(), "defer_batch")
+            .args_json(args)
+            .max_gas()
+            .transact()
+            .await?
+            .into_result()?;
+
+        for log in result.logs() {
+            println!("   📖 {:?}", log);
+        }
+
+        Ok(())
+    }
+
+    async fn formula(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<U128> {
+        println!("▶️ Formula for {steps_since_tge:?} steps since TGE and {steps} steps provided");
+
+        let args = json!({
+            "steps_since_tge": steps_since_tge,
+            "steps": steps,
+        });
+
+        let result = self.view("formula").args_json(args).await?.json()?;
+
+        println!("   ✅ {:?}", result);
+
+        Ok(result)
     }
 }

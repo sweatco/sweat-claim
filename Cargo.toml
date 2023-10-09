@@ -3,9 +3,11 @@
 resolver = "2"
 
 default-members = ["contract"]
-members = ["contract", "integration-tests"]
+members = ["contract", "integration-tests", "model"]
 
 [workspace.dependencies]
 fake = "2.8.0"
 rand = "0.8.5"
 near-sdk = "4.1.1"
+
+model = { path = "model" }

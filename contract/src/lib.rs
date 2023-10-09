@@ -1,18 +1,20 @@
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::json_types::U128;
-use near_sdk::serde::Serialize;
-use near_sdk::store::{LookupMap, UnorderedSet, Vector};
-use near_sdk::{env, near_bindgen, require, AccountId, BorshStorageKey, PanicOnDefault};
+use model::{AccountRecord, ClaimAvailabilityView, Duration, TokensAmount, UnixTimestamp};
+use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    env,
+    env::log_str,
+    json_types::U128,
+    near_bindgen, require,
+    serde::Serialize,
+    serde_json::json,
+    store::{LookupMap, UnorderedSet, Vector},
+    AccountId, BorshStorageKey, Gas, PanicOnDefault, Promise, PromiseOrValue,
+};
 
 use crate::StorageKey::AccrualsEntry;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
 const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
-
-type UnixTimestamp = u32;
-type AccrualIndex = u32;
-type TokensAmount = u128;
-type Duration = u32; // Period in seconds
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -52,6 +54,14 @@ impl Contract {
         }
     }
 
+    pub fn set_claim_period(&mut self, period: Duration) {
+        self.claim_period = period;
+    }
+
+    pub fn set_burn_period(&mut self, period: Duration) {
+        self.burn_period = period;
+    }
+
     #[private]
     pub fn add_oracle(&mut self, account_id: AccountId) {
         require!(self.oracles.insert(account_id.clone()), "Already exists");
@@ -69,6 +79,8 @@ impl Contract {
     }
 
     pub fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
+        log_str(format!("Record batch: {amounts:?}").as_str());
+
         require!(
             self.oracles.contains(&env::predecessor_account_id()),
             "Unauthorized access! Only oracle can do this!"
@@ -79,6 +91,8 @@ impl Contract {
         let mut total_balance: TokensAmount = 0;
 
         for (account_id, amount) in amounts {
+            log_str(format!("Record {amount:?} for {account_id}").as_str());
+
             let amount = amount.0;
 
             total_balance += amount;
@@ -89,6 +103,7 @@ impl Contract {
                 record.accruals.push((now_seconds, index));
             } else {
                 let mut record = AccountRecord::default();
+                record.last_claim_at = Some(now_seconds);
                 record.accruals.push((now_seconds, index));
                 self.accounts.insert(account_id, record);
             }
@@ -98,10 +113,7 @@ impl Contract {
     }
 
     pub fn get_balance_for_account(&self, account_id: AccountId) -> U128 {
-        let account_data = self
-            .accounts
-            .get(&account_id)
-            .expect("Account data is not found");
+        let account_data = self.accounts.get(&account_id).expect("Account data is not found");
 
         let result = account_data
             .accruals
@@ -116,10 +128,7 @@ impl Contract {
     }
 
     pub fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
-        let account_data = self
-            .accounts
-            .get(&account_id)
-            .expect("Account data is not found");
+        let account_data = self.accounts.get(&account_id).expect("Account data is not found");
 
         if let Some(last_claim_at) = account_data.last_claim_at {
             let now_seconds = (env::block_timestamp_ms() / 1_000) as u32;
@@ -133,34 +142,43 @@ impl Contract {
             ClaimAvailabilityView::Available()
         }
     }
-}
 
-#[derive(Serialize)]
-#[serde(
-    crate = "near_sdk::serde",
-    tag = "type",
-    content = "data",
-    rename_all = "snake_case"
-)]
-pub enum ClaimAvailabilityView {
-    Available(),
-    Unavailable((UnixTimestamp, Duration)),
-}
+    pub fn claim(&mut self) -> PromiseOrValue<U128> {
+        let account_id = env::predecessor_account_id();
+        let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
 
-#[derive(BorshDeserialize, BorshSerialize)]
-struct AccountRecord {
-    pub accruals: Vec<(UnixTimestamp, AccrualIndex)>,
-    pub is_enabled: bool,
-    pub last_claim_at: Option<UnixTimestamp>,
-}
+        let now: UnixTimestamp = (env::block_timestamp_ms() / 1000) as u32;
+        let mut total_accrual: TokensAmount = 0;
 
-impl Default for AccountRecord {
-    fn default() -> Self {
-        Self {
-            accruals: Vec::new(),
-            is_enabled: true,
-            last_claim_at: None,
+        for (datetime, index) in account_data.accruals.iter() {
+            if now - datetime > self.burn_period {
+                continue;
+            }
+
+            if let Some((accruals, total)) = self.accruals.get_mut(datetime) {
+                if let Some(amount) = accruals.get_mut(*index) {
+                    total_accrual += *amount;
+                    *total -= *amount;
+                    *amount = 0;
+                }
+            }
         }
+
+        account_data.accruals.clear();
+        account_data.last_claim_at = Some(now);
+
+        let args = json!({
+            "receiver_id": account_id,
+            "amount": total_accrual.to_string(),
+            "memo": "",
+        })
+        .to_string()
+        .as_bytes()
+        .to_vec();
+
+        Promise::new(self.token_account_id.clone())
+            .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
+            .into()
     }
 }
 

@@ -10,3 +10,5 @@ crate-type = ["cdylib"]
 [dependencies]
 near-sdk = { workspace = true }
 uint = { version = "0.9.3", default-features = false }
+
+model = { workspace = true }
