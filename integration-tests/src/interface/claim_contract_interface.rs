@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use model::{ClaimAvailabilityView, Duration};
 use near_sdk::json_types::U128;
-use serde_json::{json, Value};
+use serde_json::json;
 use workspaces::{Account, AccountId, Contract};
 
 use crate::interface::common::ContractAccount;
