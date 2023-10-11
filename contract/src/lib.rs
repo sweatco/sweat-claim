@@ -3,11 +3,12 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
     env::log_str,
+    ext_contract, is_promise_success,
     json_types::U128,
     near_bindgen, require,
     serde::Serialize,
     serde_json::json,
-    store::{LookupMap, UnorderedSet, Vector},
+    store::{LookupMap, UnorderedMap, UnorderedSet, Vector},
     AccountId, BorshStorageKey, Gas, PanicOnDefault, Promise, PromiseOrValue,
 };
 
@@ -25,7 +26,7 @@ pub struct Contract {
     claim_period: Duration, // Period in milliseconds during which tokens are locked after claim
     burn_period: Duration,  // Time in milliseconds after that unclaimed tokens are burnt
 
-    accruals: LookupMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
+    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
     accounts: LookupMap<AccountId, AccountRecord>,
 }
 
@@ -46,7 +47,7 @@ impl Contract {
             token_account_id,
 
             accounts: LookupMap::new(StorageKey::Accounts),
-            accruals: LookupMap::new(StorageKey::Accruals),
+            accruals: UnorderedMap::new(StorageKey::Accruals),
             oracles: UnorderedSet::new(StorageKey::Oracles),
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,
@@ -115,16 +116,22 @@ impl Contract {
     pub fn get_balance_for_account(&self, account_id: AccountId) -> U128 {
         let account_data = self.accounts.get(&account_id).expect("Account data is not found");
 
-        let result = account_data
-            .accruals
-            .iter()
-            .map(|entry| {
-                let data = self.accruals.get(&entry.0).expect("No data for date");
-                data.0.get(entry.1).expect("No record for accrual")
-            })
-            .sum();
+        let mut total_accrual: TokensAmount = 0;
+        let now: UnixTimestamp = Self::unix_timestamp(env::block_timestamp_ms());
 
-        U128(result)
+        for (datetime, index) in account_data.accruals.iter() {
+            if now - datetime > self.burn_period {
+                continue;
+            }
+
+            if let Some((accruals, _)) = self.accruals.get(datetime) {
+                if let Some(amount) = accruals.get(*index) {
+                    total_accrual += *amount;
+                }
+            }
+        }
+
+        U128(total_accrual)
     }
 
     pub fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
@@ -145,6 +152,12 @@ impl Contract {
 
     pub fn claim(&mut self) -> PromiseOrValue<U128> {
         let account_id = env::predecessor_account_id();
+
+        require!(
+            self.is_claim_available(account_id.clone()) == ClaimAvailabilityView::Available(),
+            "Claim is not available at the moment"
+        );
+
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
 
         let now: UnixTimestamp = (env::block_timestamp_ms() / 1000) as u32;
@@ -179,6 +192,64 @@ impl Contract {
         Promise::new(self.token_account_id.clone())
             .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
             .into()
+    }
+
+    pub fn burn(&mut self) -> PromiseOrValue<U128> {
+        require!(
+            self.oracles.contains(&env::predecessor_account_id()),
+            "Unauthorized access"
+        );
+
+        let mut total_to_burn = 0;
+        let mut keys_to_remove: Vec<UnixTimestamp> = vec![];
+        let now: UnixTimestamp = Self::unix_timestamp(env::block_timestamp_ms());
+
+        for (datetime, (_, total)) in self.accruals.iter() {
+            if now - datetime >= self.burn_period {
+                keys_to_remove.push(*datetime);
+                total_to_burn += total;
+            }
+        }
+
+        let args = json!({
+            "amount": U128(total_to_burn),
+        })
+        .to_string()
+        .as_bytes()
+        .to_vec();
+
+        Promise::new(self.token_account_id.clone())
+            .function_call("burn".to_string(), args, 0, Gas(5 * Gas::ONE_TERA.0))
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
+                    .on_burn(total_to_burn, keys_to_remove),
+            )
+            .into()
+    }
+
+    fn unix_timestamp(ms: u64) -> UnixTimestamp {
+        (ms / 1000) as u32
+    }
+}
+
+#[ext_contract(ext_self)]
+pub trait SelfCallback {
+    fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128;
+}
+
+#[near_bindgen]
+impl SelfCallback for Contract {
+    fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128 {
+        if is_promise_success() {
+            for datetime in keys_to_remove {
+                self.accruals.remove(&datetime);
+            }
+
+            U128(total_to_burn)
+        } else {
+            U128(0)
+        }
     }
 }
 

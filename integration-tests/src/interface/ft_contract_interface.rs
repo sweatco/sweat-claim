@@ -38,6 +38,8 @@ pub(crate) trait FtContractInterface {
     ) -> anyhow::Result<()>;
 
     async fn formula(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<U128>;
+    
+    async fn formula_detailed(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<(U128, U128, U128)>;
 }
 
 #[async_trait]
@@ -203,5 +205,13 @@ impl FtContractInterface for Contract {
         println!("   ✅ {:?}", result);
 
         Ok(result)
+    }
+
+    async fn formula_detailed(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<(U128, U128, U128)> {
+        let token_amount = self.formula(steps_since_tge, steps).await?.0;
+        let fee = token_amount * 5 / 100;
+        let effective_amount = token_amount - fee;
+
+        Ok((U128(fee), U128(effective_amount), U128(token_amount)))
     }
 }

@@ -25,6 +25,8 @@ pub(crate) trait ClaimContractInterface {
     async fn is_claim_available(&self, account_id: &AccountId) -> anyhow::Result<ClaimAvailabilityView>;
 
     async fn claim(&self, account: &Account) -> anyhow::Result<()>;
+
+    async fn burn(&self, account: &Account) -> anyhow::Result<U128>;
 }
 
 #[async_trait]
@@ -136,5 +138,22 @@ impl ClaimContractInterface for Contract {
         println!("Result: {:?}", result);
 
         Ok(())
+    }
+
+    async fn burn(&self, account: &Account) -> anyhow::Result<U128> {
+        println!("▶️ Burn");
+
+        let result = account
+            .call(self.id(), "burn")
+            .args_json(json!({}))
+            .max_gas()
+            .transact()
+            .await?;
+
+        println!("Result: {:?}", result.clone().into_result()?);
+
+        let result_value: U128 = result.json()?;
+
+        Ok(result_value)
     }
 }
