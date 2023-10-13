@@ -5,14 +5,10 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-use model::Duration;
 use near_units::parse_near;
 use workspaces::{network::Sandbox, Account, Worker};
 
-use crate::interface::{
-    claim_contract_interface::ClaimContract,
-    ft_contract_interface::{FtContract, FtContractInterface},
-};
+use crate::interface::{claim_contract_interface::ClaimContract, ft_contract_interface::FtContract};
 
 const EPOCH_BLOCKS_HEIGHT: u64 = 43_200;
 const HOURS_PER_EPOCH: u64 = 12;

@@ -6,7 +6,6 @@ use near_sdk::{
     ext_contract, is_promise_success,
     json_types::U128,
     near_bindgen, require,
-    serde::Serialize,
     serde_json::json,
     store::{LookupMap, UnorderedMap, UnorderedSet, Vector},
     AccountId, BorshStorageKey, Gas, PanicOnDefault, Promise, PromiseOrValue,
@@ -66,13 +65,13 @@ impl Contract {
     #[private]
     pub fn add_oracle(&mut self, account_id: AccountId) {
         require!(self.oracles.insert(account_id.clone()), "Already exists");
-        env::log_str(&format!("Oracle {} was added", account_id));
+        log_str(&format!("Oracle {account_id} was added"));
     }
 
     #[private]
     pub fn remove_oracle(&mut self, account_id: AccountId) {
         require!(self.oracles.remove(&account_id), "No such oracle");
-        env::log_str(&format!("Oracle {} was removed", account_id));
+        log_str(&format!("Oracle {account_id} was removed"));
     }
 
     pub fn get_oracles(&self) -> Vec<AccountId> {
@@ -80,7 +79,7 @@ impl Contract {
     }
 
     pub fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
-        log_str(format!("Record batch: {amounts:?}").as_str());
+        log_str(&format!("Record batch: {amounts:?}"));
 
         require!(
             self.oracles.contains(&env::predecessor_account_id()),
@@ -92,7 +91,7 @@ impl Contract {
         let mut total_balance: TokensAmount = 0;
 
         for (account_id, amount) in amounts {
-            log_str(format!("Record {amount:?} for {account_id}").as_str());
+            log_str(&format!("Record {amount:?} for {account_id}"));
 
             let amount = amount.0;
 
@@ -103,9 +102,12 @@ impl Contract {
             if let Some(record) = self.accounts.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
             } else {
-                let mut record = AccountRecord::default();
-                record.last_claim_at = Some(now_seconds);
-                record.accruals.push((now_seconds, index));
+                let record = AccountRecord {
+                    last_claim_at: Some(now_seconds),
+                    accruals: vec![(now_seconds, index)],
+                    ..Default::default()
+                };
+
                 self.accounts.insert(account_id, record);
             }
         }
@@ -137,16 +139,16 @@ impl Contract {
     pub fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
         let account_data = self.accounts.get(&account_id).expect("Account data is not found");
 
-        if let Some(last_claim_at) = account_data.last_claim_at {
-            let now_seconds = (env::block_timestamp_ms() / 1_000) as u32;
+        let Some(last_claim_at) = account_data.last_claim_at else {
+            return ClaimAvailabilityView::Available;
+        };
 
-            if now_seconds - last_claim_at > self.claim_period {
-                ClaimAvailabilityView::Available()
-            } else {
-                ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
-            }
+        let now_seconds = (env::block_timestamp_ms() / 1_000) as u32;
+
+        if now_seconds - last_claim_at > self.claim_period {
+            ClaimAvailabilityView::Available
         } else {
-            ClaimAvailabilityView::Available()
+            ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
         }
     }
 
@@ -163,7 +165,7 @@ impl Contract {
         let now: UnixTimestamp = (env::block_timestamp_ms() / 1000) as u32;
         let mut total_accrual: TokensAmount = 0;
 
-        for (datetime, index) in account_data.accruals.iter() {
+        for (datetime, index) in &account_data.accruals {
             if now - datetime > self.burn_period {
                 continue;
             }
@@ -252,6 +254,3 @@ impl SelfCallback for Contract {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {}

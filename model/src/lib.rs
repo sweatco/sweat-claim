@@ -11,7 +11,7 @@ pub type Duration = u32; // Period in seconds
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]
 pub enum ClaimAvailabilityView {
-    Available(),
+    Available,
     Unavailable((UnixTimestamp, Duration)),
 }
 
