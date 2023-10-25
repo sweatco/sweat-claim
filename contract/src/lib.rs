@@ -62,10 +62,14 @@ impl Contract {
     }
 
     pub fn set_claim_period(&mut self, period: Duration) {
+        self.assert_oracle();
+
         self.claim_period = period;
     }
 
     pub fn set_burn_period(&mut self, period: Duration) {
+        self.assert_oracle();
+
         self.burn_period = period;
     }
 }
