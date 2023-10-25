@@ -18,7 +18,7 @@ pub(crate) trait ClaimContractInterface {
 
     async fn set_burn_period(&self, period: Duration) -> anyhow::Result<()>;
 
-    async fn get_balance_for_account(&self, account: &Account) -> anyhow::Result<U128>;
+    async fn get_claimable_balance_for_account(&self, account: &Account) -> anyhow::Result<U128>;
 
     async fn add_oracle(&self, account_id: &AccountId) -> anyhow::Result<()>;
 
@@ -76,14 +76,18 @@ impl ClaimContractInterface for Contract {
         Ok(())
     }
 
-    async fn get_balance_for_account(&self, account: &Account) -> anyhow::Result<U128> {
+    async fn get_claimable_balance_for_account(&self, account: &Account) -> anyhow::Result<U128> {
         println!("▶️ View balance for account {:?}", account.id());
 
         let args = json!({
             "account_id": account.id(),
         });
 
-        let result = self.view("get_balance_for_account").args_json(args).await?.json()?;
+        let result = self
+            .view("get_claimable_balance_for_account")
+            .args_json(args)
+            .await?
+            .json()?;
 
         println!("   ✅ {:?}", result);
 

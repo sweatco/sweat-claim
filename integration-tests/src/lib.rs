@@ -54,7 +54,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     assert_eq!(claim_contract_balance.0, target_effective_token_amount);
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(alice_deferred_balance.0, target_effective_token_amount);
 
     let is_claim_available = context.claim_contract.is_claim_available(alice.id()).await?;
@@ -118,7 +118,7 @@ async fn burn() -> anyhow::Result<()> {
     let burn_result = context.claim_contract.burn(&manager).await?;
     assert_eq!(target_effective_token_amount, burn_result.0);
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(0, alice_deferred_balance.0);
 
     Ok(())
@@ -154,12 +154,12 @@ async fn outdate() -> anyhow::Result<()> {
         .await?;
     steps_since_tge += alice_steps as u64;
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
 
     context.fast_forward_hours((BURN_PERIOD / (60 * 60) + 1) as u64).await?;
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(0, alice_deferred_balance.0);
 
     let (_, target_outdated_effective_token_amount, _) = context
@@ -193,7 +193,7 @@ async fn outdate() -> anyhow::Result<()> {
         )
         .await?;
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(
         target_effective_token_amount.0 + target_outdated_effective_token_amount.0,
         alice_deferred_balance.0
@@ -201,7 +201,7 @@ async fn outdate() -> anyhow::Result<()> {
 
     context.fast_forward_hours((BURN_PERIOD / (60 * 60) - 1) as u64).await?;
 
-    let alice_deferred_balance = context.claim_contract.get_balance_for_account(&alice).await?;
+    let alice_deferred_balance = context.claim_contract.get_claimable_balance_for_account(&alice).await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
 
     Ok(())
