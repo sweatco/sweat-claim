@@ -29,7 +29,7 @@ impl InitApiIntegration for SweatClaim<'_> {
     }
 
     async fn set_claim_period(&mut self, period: Duration) -> Result<()> {
-        self.call_contract(
+        self.call_user(
             "set_claim_period",
             json!({
                 "period": period,
@@ -39,7 +39,7 @@ impl InitApiIntegration for SweatClaim<'_> {
     }
 
     async fn set_burn_period(&mut self, period: Duration) -> Result<()> {
-        self.call_contract(
+        self.call_user(
             "set_burn_period",
             json!({
                 "period": period,
@@ -100,7 +100,7 @@ impl RecordApiIntegration for SweatClaim<'_> {
 impl ClaimApiIntegration for SweatClaim<'_> {
     async fn get_claimable_balance_for_account(&self, account_id: AccountId) -> Result<U128> {
         self.call_contract(
-            "get_balance_for_account",
+            "get_claimable_balance_for_account",
             json!({
                 "account_id": account_id,
             }),

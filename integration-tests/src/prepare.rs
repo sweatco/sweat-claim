@@ -69,8 +69,16 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
         .mint_for_user(&alice.to_near(), 100_000_000)
         .await?;
 
-    context.sweat_claim().set_claim_period(CLAIM_PERIOD).await?;
-    context.sweat_claim().set_burn_period(BURN_PERIOD).await?;
+    context
+        .sweat_claim()
+        .with_user(&manager)
+        .set_claim_period(CLAIM_PERIOD)
+        .await?;
+    context
+        .sweat_claim()
+        .with_user(&manager)
+        .set_burn_period(BURN_PERIOD)
+        .await?;
 
     Ok(context)
 }
