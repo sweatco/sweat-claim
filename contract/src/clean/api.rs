@@ -1,6 +1,6 @@
 use near_sdk::{near_bindgen, AccountId};
 
-use crate::*;
+use crate::{Contract, ContractExt};
 
 pub trait CleanApi {
     fn clean(&mut self, account_ids: Vec<AccountId>);

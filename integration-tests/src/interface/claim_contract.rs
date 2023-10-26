@@ -1,7 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use integration_utils::integration_contract::IntegrationContract;
-use model::{ClaimAvailabilityView, Duration, SweatClaimInterfaceIntegration};
+use model::{
+    AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ClaimAvailabilityView, Duration, InitApiIntegration,
+    RecordApiIntegration,
+};
 use near_sdk::{json_types::U128, AccountId};
 use serde_json::json;
 use workspaces::{Account, Contract};
@@ -14,7 +17,7 @@ pub struct SweatClaim<'a> {
 }
 
 #[async_trait]
-impl SweatClaimInterfaceIntegration for SweatClaim<'_> {
+impl InitApiIntegration for SweatClaim<'_> {
     async fn init(&self, token_account_id: near_sdk::AccountId) -> Result<()> {
         self.call_contract(
             "init",
@@ -44,7 +47,10 @@ impl SweatClaimInterfaceIntegration for SweatClaim<'_> {
         )
         .await
     }
+}
 
+#[async_trait]
+impl AuthApiIntegration for SweatClaim<'_> {
     async fn add_oracle(&mut self, account_id: AccountId) -> Result<()> {
         self.call_contract(
             "add_oracle",
@@ -68,7 +74,17 @@ impl SweatClaimInterfaceIntegration for SweatClaim<'_> {
     async fn get_oracles(&self) -> Result<Vec<AccountId>> {
         self.call_contract("get_oracles", ()).await
     }
+}
 
+#[async_trait]
+impl BurnApiIntegration for SweatClaim<'_> {
+    async fn burn(&mut self) -> Result<U128> {
+        self.call_user("burn", ()).await
+    }
+}
+
+#[async_trait]
+impl RecordApiIntegration for SweatClaim<'_> {
     async fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) -> Result<()> {
         self.call_contract(
             "record_batch_for_hold",
@@ -78,8 +94,11 @@ impl SweatClaimInterfaceIntegration for SweatClaim<'_> {
         )
         .await
     }
+}
 
-    async fn get_balance_for_account(&self, account_id: AccountId) -> Result<U128> {
+#[async_trait]
+impl ClaimApiIntegration for SweatClaim<'_> {
+    async fn get_claimable_balance_for_account(&self, account_id: AccountId) -> Result<U128> {
         self.call_contract(
             "get_balance_for_account",
             json!({
@@ -101,10 +120,6 @@ impl SweatClaimInterfaceIntegration for SweatClaim<'_> {
 
     async fn claim(&mut self) -> Result<()> {
         self.call_user("claim", ()).await
-    }
-
-    async fn burn(&mut self) -> Result<U128> {
-        self.call_user("burn", ()).await
     }
 }
 

@@ -1,8 +1,7 @@
-use crate::*;
+use model::{AccountRecord, RecordApi, TokensAmount};
+use near_sdk::{env, env::log_str, json_types::U128, near_bindgen, require, store::Vector, AccountId};
 
-trait RecordApi {
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>);
-}
+use crate::{common::unix_timestamp, Contract, ContractExt, StorageKey::AccrualsEntry};
 
 #[near_bindgen]
 impl RecordApi for Contract {
@@ -14,7 +13,7 @@ impl RecordApi for Contract {
             "Unauthorized access! Only oracle can do this!"
         );
 
-        let now_seconds: UnixTimestamp = (env::block_timestamp_ms() / 1_000) as u32;
+        let now_seconds = unix_timestamp(env::block_timestamp_ms());
         let mut balances: Vector<TokensAmount> = Vector::new(AccrualsEntry(now_seconds));
         let mut total_balance: TokensAmount = 0;
 

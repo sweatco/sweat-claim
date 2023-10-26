@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use integration_utils::{integration_contract::IntegrationContract, misc::ToNear};
-use model::{Duration, SweatClaimInterfaceIntegration};
+use model::{AuthApiIntegration, Duration, InitApiIntegration};
 use workspaces::Account;
 
 use crate::interface::{

@@ -1,7 +1,9 @@
-use crate::*;
+use model::UnixTimestamp;
+use near_sdk::env::panic_str;
 
 mod asserts;
 
 pub(crate) fn unix_timestamp(ms: u64) -> UnixTimestamp {
-    (ms / 1000) as u32
+    u32::try_from(ms / 1000)
+        .unwrap_or_else(|err| panic_str(&format!("Failed to get convert milliseconds to Unix timestamp: {err}")))
 }
