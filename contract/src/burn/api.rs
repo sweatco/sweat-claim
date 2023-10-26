@@ -1,8 +1,10 @@
-use crate::{common::unix_timestamp, *};
+use model::{api::BurnApi, TokensAmount, UnixTimestamp};
+use near_sdk::{
+    env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, Gas, Promise,
+    PromiseOrValue,
+};
 
-trait BurnApi {
-    fn burn(&mut self) -> PromiseOrValue<U128>;
-}
+use crate::{common::unix_timestamp, Contract, ContractExt};
 
 #[near_bindgen]
 impl BurnApi for Contract {

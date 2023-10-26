@@ -8,6 +8,12 @@ members = ["contract", "integration-tests", "model"]
 [workspace.dependencies]
 fake = "2.8.0"
 rand = "0.8.5"
+anyhow = "1.0.75"
 near-sdk = "4.1.1"
+async-trait = "0.1.74"
+tokio = "1.33.0"
+
+integration-trait = { git = "https://github.com/sweatco/integration-trait.git", rev = "83a69f7ba4acab9405bf935f7dfc70f2f5279c40" }
+integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "ba3875776505f5799881c97b24bb92aedf656af9" }
 
 model = { path = "model" }

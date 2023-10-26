@@ -1,4 +1,6 @@
-use crate::*;
+use near_sdk::{env, require};
+
+use crate::Contract;
 
 impl Contract {
     pub(crate) fn assert_oracle(&self) {
