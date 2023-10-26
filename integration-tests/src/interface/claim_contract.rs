@@ -2,8 +2,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use integration_utils::integration_contract::IntegrationContract;
 use model::{
-    AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ClaimAvailabilityView, Duration, InitApiIntegration,
-    RecordApiIntegration,
+    api::{AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, InitApiIntegration, RecordApiIntegration},
+    ClaimAvailabilityView, Duration,
 };
 use near_sdk::{json_types::U128, AccountId};
 use serde_json::json;

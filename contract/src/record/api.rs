@@ -1,4 +1,4 @@
-use model::{AccountRecord, RecordApi, TokensAmount};
+use model::{account_record::AccountRecord, api::RecordApi, TokensAmount};
 use near_sdk::{env, env::log_str, json_types::U128, near_bindgen, require, store::Vector, AccountId};
 
 use crate::{common::unix_timestamp, Contract, ContractExt, StorageKey::AccrualsEntry};

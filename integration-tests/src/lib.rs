@@ -1,7 +1,10 @@
 #![cfg(test)]
 
 use integration_utils::{integration_contract::IntegrationContract, misc::ToNear};
-use model::{BurnApiIntegration, ClaimApiIntegration, ClaimAvailabilityView};
+use model::{
+    api::{BurnApiIntegration, ClaimApiIntegration},
+    ClaimAvailabilityView,
+};
 use near_sdk::json_types::U64;
 
 use crate::{
