@@ -9,4 +9,11 @@ impl Contract {
             "Unauthorized access"
         );
     }
+
+    pub(crate) fn assert_private() {
+        require!(
+            env::current_account_id() == env::predecessor_account_id(),
+            "Method is private",
+        );
+    }
 }
