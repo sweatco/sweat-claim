@@ -40,7 +40,7 @@ enum StorageKey {
 #[near_bindgen]
 impl InitApi for Contract {
     #[init]
-    pub fn init(token_account_id: AccountId) -> Self {
+    fn init(token_account_id: AccountId) -> Self {
         Self::assert_private();
 
         Self {
