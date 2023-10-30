@@ -5,19 +5,19 @@ use model::{
     Duration,
 };
 use near_sdk::json_types::U128;
+use near_workspaces::Account;
+use sweat_integration::{SweatFt, FT_CONTRACT};
 use sweat_model::{StorageManagementIntegration, SweatApiIntegration};
-use workspaces::Account;
 
 use crate::interface::{
     claim_contract::{SweatClaim, SWEAT_CLAIM},
     common::ContractAccount,
-    ft_contract::{SweatFt, FT_CONTRACT},
 };
 
 pub const CLAIM_PERIOD: Duration = 30 * 60;
 pub const BURN_PERIOD: Duration = 3 * 60 * 60;
 
-pub type Context = integration_utils::context::Context<workspaces::network::Sandbox>;
+pub type Context = integration_utils::context::Context<near_workspaces::network::Sandbox>;
 
 #[async_trait]
 pub trait IntegrationContext {

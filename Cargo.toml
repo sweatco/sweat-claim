@@ -10,15 +10,14 @@ fake = "2.8.0"
 rand = "0.8.5"
 anyhow = "1.0.75"
 async-trait = "0.1.74"
-tokio = "1.33.0"
+tokio = "1.28"
 
 integration-trait = { git = "https://github.com/sweatco/integration-trait.git", rev = "83a69f7ba4acab9405bf935f7dfc70f2f5279c40" }
-integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "25114927f9e12574e7c654fcc14fee1a9d46431c" }
+integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "379029a03f092d2eb78fa0ce0cac96710749e992" }
 
 model = { path = "model" }
-sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "288778b1e19f19fb47e82745e82463c2a5811fe5" }
+sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "8a1d2824eeda0db003805c74f0a6fd1927bcda21" }
+sweat-integration = { git = "https://github.com/sweatco/sweat-near", rev = "8a1d2824eeda0db003805c74f0a6fd1927bcda21" }
 
 near-sdk = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }
 near-contract-standards = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }
-near-self-update = { git = "https://github.com/sweatco/near-self-update.git", rev = "7064db3cdd924efc7fa7c00664920a2b482e7bcf" }
-
