@@ -9,11 +9,16 @@ members = ["contract", "integration-tests", "model"]
 fake = "2.8.0"
 rand = "0.8.5"
 anyhow = "1.0.75"
-near-sdk = "4.1.1"
 async-trait = "0.1.74"
 tokio = "1.33.0"
 
 integration-trait = { git = "https://github.com/sweatco/integration-trait.git", rev = "83a69f7ba4acab9405bf935f7dfc70f2f5279c40" }
-integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "ba3875776505f5799881c97b24bb92aedf656af9" }
+integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "25114927f9e12574e7c654fcc14fee1a9d46431c" }
 
 model = { path = "model" }
+sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "288778b1e19f19fb47e82745e82463c2a5811fe5" }
+
+near-sdk = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }
+near-contract-standards = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }
+near-self-update = { git = "https://github.com/sweatco/near-self-update.git", rev = "7064db3cdd924efc7fa7c00664920a2b482e7bcf" }
+

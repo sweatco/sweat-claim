@@ -1,3 +1,4 @@
+use anyhow::Result;
 use async_trait::async_trait;
 use integration_utils::integration_contract::IntegrationContract;
 use near_sdk::{
@@ -6,6 +7,9 @@ use near_sdk::{
 };
 use near_units::parse_near;
 use serde_json::json;
+use sweat_model::{
+    FungibleTokenCoreIntegration, StorageManagementIntegration, SweatApiIntegration, SweatDeferIntegration,
+};
 use workspaces::{Account, Contract};
 
 pub const FT_CONTRACT: &str = "sweat";
@@ -16,113 +20,31 @@ pub struct SweatFt<'a> {
 }
 
 #[async_trait]
-pub(crate) trait FtContractInterface {
-    async fn init(&self) -> anyhow::Result<()>;
-
-    async fn add_oracle(&self, account_id: &AccountId) -> anyhow::Result<()>;
-
-    async fn ft_balance_of(&self, user: &AccountId) -> anyhow::Result<U128>;
-
-    async fn mint_for_user(&self, user: &AccountId, amount: u128) -> anyhow::Result<()>;
-
-    async fn storage_deposit(&self) -> anyhow::Result<()>;
-
-    async fn ft_transfer_call(
-        &self,
-        account: &Account,
-        receiver_id: &AccountId,
-        amount: u128,
-        msg: String,
-    ) -> anyhow::Result<()>;
-
-    async fn defer_batch(
-        &self,
-        steps_batch: Vec<(AccountId, u16)>,
-        holding_account_id: AccountId,
-    ) -> anyhow::Result<()>;
-
-    async fn formula(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<U128>;
-
-    async fn formula_detailed(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<(U128, U128, U128)>;
-}
-
-#[async_trait]
-impl FtContractInterface for SweatFt<'_> {
-    async fn init(&self) -> anyhow::Result<()> {
-        self.call_contract(
-            "new",
-            json!({
-                "postfix": ".u.sweat.testnet",
-            }),
-        )
-        .await
-    }
-
-    async fn add_oracle(&self, account_id: &AccountId) -> anyhow::Result<()> {
-        self.call_contract(
-            "add_oracle",
-            json!({
-                "account_id": account_id,
-            }),
-        )
-        .await
-    }
-
-    async fn ft_balance_of(&self, account_id: &AccountId) -> anyhow::Result<U128> {
-        self.call_contract(
-            "ft_balance_of",
-            json!({
-                "account_id": account_id,
-            }),
-        )
-        .await
-    }
-
-    async fn mint_for_user(&self, user: &AccountId, amount: u128) -> anyhow::Result<()> {
-        self.call_contract(
-            "tge_mint",
-            json!({
-                "account_id": user,
-                "amount": amount.to_string(),
-            }),
-        )
-        .await
-    }
-
-    async fn storage_deposit(&self) -> anyhow::Result<()> {
-        let user = self.user_account();
-
-        let args = json!({ "account_id": user.id() });
-
-        user.call(self.contract.id(), "storage_deposit")
-            .args_json(args)
-            .deposit(parse_near!("0.00235 N"))
-            .transact()
-            .await?
-            .into_result()?;
-
-        Ok(())
+impl FungibleTokenCoreIntegration for SweatFt<'_> {
+    async fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>) -> Result<()> {
+        todo!()
     }
 
     async fn ft_transfer_call(
-        &self,
-        user: &Account,
-        receiver_id: &AccountId,
-        amount: u128,
+        &mut self,
+        receiver_id: AccountId,
+        amount: U128,
+        memo: Option<String>,
         msg: String,
-    ) -> anyhow::Result<()> {
+    ) -> Result<U128> {
         println!(
-            "▶️ Transfer {} fungible tokens to {} with message: {}",
+            "▶️ Transfer {:?} fungible tokens to {} with message: {}",
             amount, receiver_id, msg
         );
 
         let args = json!({
             "receiver_id": receiver_id,
-            "amount": amount.to_string(),
+            "amount": amount,
             "msg": msg.to_string(),
         });
 
-        let result = user
+        let result = self
+            .user_account()
             .call(self.contract.id(), "ft_transfer_call")
             .args_json(args)
             .max_gas()
@@ -135,14 +57,73 @@ impl FtContractInterface for SweatFt<'_> {
             println!("   📖 {:?}", log);
         }
 
-        Ok(())
+        Ok(result.json()?)
     }
 
-    async fn defer_batch(
+    async fn ft_total_supply(&self) -> Result<U128> {
+        self.call_contract("ft_total_supply", ()).await
+    }
+
+    async fn ft_balance_of(&self, account_id: AccountId) -> Result<U128> {
+        self.call_contract(
+            "ft_balance_of",
+            json!({
+                "account_id": account_id,
+            }),
+        )
+        .await
+    }
+}
+
+#[async_trait]
+impl StorageManagementIntegration for SweatFt<'_> {
+    async fn storage_deposit(
+        &mut self,
+        account_id: Option<AccountId>,
+        registration_only: Option<bool>,
+    ) -> Result<near_contract_standards::storage_management::StorageBalance> {
+        let args = json!({ "account_id": account_id });
+
+        let result = self
+            .contract
+            .call("storage_deposit")
+            .args_json(args)
+            .deposit(parse_near!("0.00235 N"))
+            .transact()
+            .await?
+            .into_result()?;
+
+        Ok(result.json()?)
+    }
+
+    async fn storage_withdraw(
+        &mut self,
+        amount: Option<U128>,
+    ) -> Result<near_contract_standards::storage_management::StorageBalance> {
+        todo!()
+    }
+
+    async fn storage_unregister(&mut self, force: Option<bool>) -> Result<bool> {
+        todo!()
+    }
+
+    async fn storage_balance_bounds(
         &self,
-        steps_batch: Vec<(AccountId, u16)>,
-        holding_account_id: AccountId,
-    ) -> anyhow::Result<()> {
+    ) -> Result<near_contract_standards::storage_management::StorageBalanceBounds> {
+        todo!()
+    }
+
+    async fn storage_balance_of(
+        &self,
+        account_id: AccountId,
+    ) -> Result<Option<near_contract_standards::storage_management::StorageBalance>> {
+        todo!()
+    }
+}
+
+#[async_trait]
+impl SweatDeferIntegration for SweatFt<'_> {
+    async fn defer_batch(&mut self, steps_batch: Vec<(AccountId, u16)>, holding_account_id: AccountId) -> Result<()> {
         self.call_user(
             "defer_batch",
             json!({
@@ -151,6 +132,64 @@ impl FtContractInterface for SweatFt<'_> {
             }),
         )
         .await
+    }
+}
+
+#[async_trait]
+impl SweatApiIntegration for SweatFt<'_> {
+    async fn new(&self, postfix: Option<String>) -> Result<()> {
+        self.call_contract(
+            "new",
+            json!({
+                "postfix": postfix,
+            }),
+        )
+        .await
+    }
+
+    async fn add_oracle(&mut self, account_id: &AccountId) -> Result<()> {
+        self.call_contract(
+            "add_oracle",
+            json!({
+                "account_id": account_id,
+            }),
+        )
+        .await
+    }
+
+    async fn remove_oracle(&mut self, account_id: &AccountId) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    async fn get_oracles(&self) -> anyhow::Result<Vec<AccountId>> {
+        todo!()
+    }
+
+    async fn tge_mint(&mut self, account_id: &AccountId, amount: U128) -> anyhow::Result<()> {
+        self.call_contract(
+            "tge_mint",
+            json!({
+                "account_id": account_id,
+                "amount": amount,
+            }),
+        )
+        .await
+    }
+
+    async fn tge_mint_batch(&mut self, batch: Vec<(AccountId, U128)>) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    async fn burn(&mut self, amount: &U128) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    async fn get_steps_since_tge(&self) -> anyhow::Result<U64> {
+        todo!()
+    }
+
+    async fn record_batch(&mut self, steps_batch: Vec<(AccountId, u16)>) -> anyhow::Result<()> {
+        todo!()
     }
 
     async fn formula(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<U128> {
@@ -163,8 +202,10 @@ impl FtContractInterface for SweatFt<'_> {
         )
         .await
     }
+}
 
-    async fn formula_detailed(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<(U128, U128, U128)> {
+impl SweatFt<'_> {
+    pub async fn formula_detailed(&self, steps_since_tge: U64, steps: u16) -> anyhow::Result<(U128, U128, U128)> {
         let token_amount = self.formula(steps_since_tge, steps).await?.0;
         let fee = token_amount * 5 / 100;
         let effective_amount = token_amount - fee;

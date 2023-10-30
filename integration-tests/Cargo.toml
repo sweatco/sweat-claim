@@ -9,6 +9,7 @@ name = "integration_tests"
 
 [dev-dependencies]
 near-sdk = { workspace = true }
+near-contract-standards = { workspace = true }
 anyhow = { workspace = true }
 tokio = { workspace = true }
 
@@ -25,5 +26,6 @@ pkg-config = "0.3.1"
 [dependencies]
 async-trait = "0.1.73"
 
-integration-utils = { workspace = true }
 model = { workspace = true }
+sweat-model = { workspace = true }
+integration-utils = { workspace = true }

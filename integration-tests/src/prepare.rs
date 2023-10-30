@@ -4,12 +4,14 @@ use model::{
     api::{AuthApiIntegration, InitApiIntegration},
     Duration,
 };
+use near_sdk::json_types::U128;
+use sweat_model::{StorageManagementIntegration, SweatApiIntegration};
 use workspaces::Account;
 
 use crate::interface::{
     claim_contract::{SweatClaim, SWEAT_CLAIM},
     common::ContractAccount,
-    ft_contract::{FtContractInterface, SweatFt, FT_CONTRACT},
+    ft_contract::{SweatFt, FT_CONTRACT},
 };
 
 pub const CLAIM_PERIOD: Duration = 30 * 60;
@@ -49,7 +51,7 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
     let manager = context.manager().await?;
     let alice = context.alice().await?;
 
-    context.ft_contract().init().await?;
+    context.ft_contract().new(".u.sweat.testnet".to_string().into()).await?;
     context.sweat_claim().init(context.ft_contract().account()).await?;
 
     context.ft_contract().add_oracle(&manager.to_near()).await?;
@@ -62,14 +64,16 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
 
     context
         .ft_contract()
-        .with_user(context.sweat_claim().contract().as_account())
-        .storage_deposit()
+        .storage_deposit(context.sweat_claim().contract().as_account().to_near().into(), None)
         .await?;
 
-    context.ft_contract().with_user(&alice).storage_deposit().await?;
     context
         .ft_contract()
-        .mint_for_user(&alice.to_near(), 100_000_000)
+        .storage_deposit(alice.to_near().into(), None)
+        .await?;
+    context
+        .ft_contract()
+        .tge_mint(&alice.to_near(), U128(100_000_000))
         .await?;
 
     context
