@@ -8,41 +8,43 @@ use crate::{common::unix_timestamp, Contract, ContractExt};
 #[near_bindgen]
 impl ClaimApi for Contract {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
-        // TODO: return value when no account data
-        let account_data = self.accounts.get(&account_id).expect("Account data is not found");
+        if let Some(account_data) = self.accounts.get(&account_id) {
+            let mut total_accrual: TokensAmount = 0;
+            let now: UnixTimestamp = unix_timestamp(env::block_timestamp_ms());
 
-        let mut total_accrual: TokensAmount = 0;
-        let now: UnixTimestamp = unix_timestamp(env::block_timestamp_ms());
+            for (datetime, index) in &account_data.accruals {
+                if now - datetime > self.burn_period {
+                    continue;
+                }
 
-        for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
-                continue;
-            }
-
-            if let Some((accruals, _)) = self.accruals.get(datetime) {
-                if let Some(amount) = accruals.get(*index) {
-                    total_accrual += *amount;
+                if let Some((accruals, _)) = self.accruals.get(datetime) {
+                    if let Some(amount) = accruals.get(*index) {
+                        total_accrual += *amount;
+                    }
                 }
             }
-        }
 
-        U128(total_accrual)
+            U128(total_accrual)
+        } else {
+            U128(0)
+        }
     }
 
     fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
-        // TODO: return value when no account data
-        let account_data = self.accounts.get(&account_id).expect("Account data is not found");
+        if let Some(account_data) = self.accounts.get(&account_id) {
+            let Some(last_claim_at) = account_data.last_claim_at else {
+                return ClaimAvailabilityView::Available;
+            };
 
-        let Some(last_claim_at) = account_data.last_claim_at else {
-            return ClaimAvailabilityView::Available;
-        };
+            let now_seconds = unix_timestamp(env::block_timestamp_ms());
 
-        let now_seconds = unix_timestamp(env::block_timestamp_ms());
-
-        if now_seconds - last_claim_at > self.claim_period {
-            ClaimAvailabilityView::Available
+            if now_seconds - last_claim_at > self.claim_period {
+                ClaimAvailabilityView::Available
+            } else {
+                ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
+            }
         } else {
-            ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
+            ClaimAvailabilityView::Unregistered
         }
     }
 
