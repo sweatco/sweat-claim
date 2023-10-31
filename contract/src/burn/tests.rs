@@ -37,6 +37,8 @@ fn test_burn_when_outdated_tokens_exist() {
 
     let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
     assert_eq!(0, bob_new_balance);
+
+    assert!(!contract.is_service_call_running);
 }
 
 #[test]
@@ -68,6 +70,8 @@ fn test_ext_error_on_burn_when_outdated_tokens_exist() {
 
     let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
     assert_eq!(0, bob_new_balance);
+
+    assert!(!contract.is_service_call_running);
 }
 
 #[test]
@@ -97,4 +101,6 @@ fn test_burn_when_outdated_tokens_don_not_exist() {
 
     let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
     assert_eq!(bob_balance, bob_new_balance);
+
+    assert!(!contract.is_service_call_running);
 }

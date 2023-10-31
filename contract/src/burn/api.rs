@@ -34,6 +34,8 @@ impl BurnApi for Contract {
         if total_to_burn > 0 {
             self.burn_external(total_to_burn, keys_to_remove)
         } else {
+            self.is_service_call_running = false;
+
             PromiseOrValue::Value(U128(0))
         }
     }
