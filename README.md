@@ -2,6 +2,9 @@
 
 -------------------------------------
 
+<img width="1273" alt="image" src="https://github.com/sweatco/sweat-claim/assets/18597916/44784e8b-5d7c-4b15-b786-2fd188004553">
+
+
   
 
 This app was initialized with [create-near-app]
