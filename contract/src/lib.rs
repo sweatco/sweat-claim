@@ -27,6 +27,8 @@ pub struct Contract {
 
     accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
     accounts: LookupMap<AccountId, AccountRecord>,
+
+    is_service_call_running: bool,
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -52,6 +54,8 @@ impl InitApi for Contract {
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,
             burn_period: INITIAL_BURN_PERIOD_MS,
+
+            is_service_call_running: false,
         }
     }
 
