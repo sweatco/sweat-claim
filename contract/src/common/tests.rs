@@ -45,14 +45,6 @@ impl Context {
         testing_env!(self.builder.build());
     }
 
-    pub(crate) fn set_block_timestamp_in_days(&mut self, days: u64) {
-        self.set_block_timestamp(Duration::from_secs(days * 24 * 60 * 60));
-    }
-
-    pub(crate) fn set_block_timestamp_in_minutes(&mut self, hours: u64) {
-        self.set_block_timestamp(Duration::from_secs(hours * 60));
-    }
-
     pub(crate) fn set_block_timestamp_in_seconds(&mut self, seconds: u64) {
         self.set_block_timestamp(Duration::from_secs(seconds));
     }

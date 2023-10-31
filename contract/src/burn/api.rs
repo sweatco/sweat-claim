@@ -1,11 +1,12 @@
-use model::api::BurnApi;
+use model::{api::BurnApi, TokensAmount, UnixTimestamp};
 use near_sdk::{
-    env, ext_contract, is_promise_success, json_types::U128, require, serde_json::json, Gas, Promise, PromiseOrValue,
+    env, ext_contract, is_promise_success, json_types::U128, near_bindgen, require, serde_json::json, Gas, Promise,
+    PromiseOrValue,
 };
 
 #[cfg(test)]
 use crate::common::tests::data::get_test_future_success;
-use crate::{common::unix_timestamp, *};
+use crate::{common::unix_timestamp, Contract, ContractExt};
 
 #[cfg(test)]
 pub(crate) const EXT_BURN_FUTURE: &str = "ext_burn";
