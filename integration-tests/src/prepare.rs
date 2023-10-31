@@ -47,7 +47,7 @@ impl IntegrationContext for Context {
 }
 
 pub async fn prepare_contract() -> anyhow::Result<Context> {
-    let mut context = Context::new(&[FT_CONTRACT, SWEAT_CLAIM]).await?;
+    let mut context = Context::new(&[FT_CONTRACT, SWEAT_CLAIM], "build".into()).await?;
     let manager = context.manager().await?;
     let alice = context.alice().await?;
 

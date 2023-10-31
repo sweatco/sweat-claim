@@ -1715,7 +1715,7 @@ dependencies = [
 [[package]]
 name = "integration-utils"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/integration-utils.git?rev=f7209c08dddb6b88bac3d7346ae2510bdf78e547#f7209c08dddb6b88bac3d7346ae2510bdf78e547"
+source = "git+https://github.com/sweatco/integration-utils.git?rev=0b3c2faf0db31cdb3481be4d35dbb48b62a98618#0b3c2faf0db31cdb3481be4d35dbb48b62a98618"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3833,7 +3833,7 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "sweat-integration"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=18f8d1ab09d6a675b66d837b137bb5936221243d#18f8d1ab09d6a675b66d837b137bb5936221243d"
+source = "git+https://github.com/sweatco/sweat-near?rev=82b5acf1c743d38191b996dc8eff3ac289e467d6#82b5acf1c743d38191b996dc8eff3ac289e467d6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3848,7 +3848,7 @@ dependencies = [
 [[package]]
 name = "sweat-model"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=18f8d1ab09d6a675b66d837b137bb5936221243d#18f8d1ab09d6a675b66d837b137bb5936221243d"
+source = "git+https://github.com/sweatco/sweat-near?rev=82b5acf1c743d38191b996dc8eff3ac289e467d6#82b5acf1c743d38191b996dc8eff3ac289e467d6"
 dependencies = [
  "anyhow",
  "async-trait",
