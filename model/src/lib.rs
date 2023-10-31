@@ -1,7 +1,7 @@
-use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
-    serde::{Deserialize, Serialize},
-};
+pub mod account_record;
+pub mod api;
+
+use near_sdk::serde::{Deserialize, Serialize};
 
 pub type UnixTimestamp = u32;
 pub type AccrualIndex = u32;
@@ -13,23 +13,4 @@ pub type Duration = u32; // Period in seconds
 pub enum ClaimAvailabilityView {
     Available,
     Unavailable((UnixTimestamp, Duration)),
-}
-
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct AccountRecord {
-    pub accruals: Vec<(UnixTimestamp, AccrualIndex)>,
-    pub is_enabled: bool,
-    pub last_claim_at: Option<UnixTimestamp>,
-    pub is_locked: bool,
-}
-
-impl Default for AccountRecord {
-    fn default() -> Self {
-        Self {
-            accruals: Vec::new(),
-            is_enabled: true,
-            last_claim_at: None,
-            is_locked: false,
-        }
-    }
 }

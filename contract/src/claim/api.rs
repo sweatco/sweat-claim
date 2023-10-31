@@ -1,12 +1,9 @@
-use crate::{common::unix_timestamp, *};
+use model::{api::ClaimApi, ClaimAvailabilityView, TokensAmount, UnixTimestamp};
+use near_sdk::{
+    env, json_types::U128, near_bindgen, require, serde_json::json, AccountId, Gas, Promise, PromiseOrValue,
+};
 
-pub trait ClaimApi {
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128;
-
-    fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView;
-
-    fn claim(&mut self) -> PromiseOrValue<U128>;
-}
+use crate::{common::unix_timestamp, Contract, ContractExt};
 
 #[near_bindgen]
 impl ClaimApi for Contract {
@@ -17,7 +14,7 @@ impl ClaimApi for Contract {
         let mut total_accrual: TokensAmount = 0;
         let now: UnixTimestamp = unix_timestamp(env::block_timestamp_ms());
 
-        for (datetime, index) in account_data.accruals.iter() {
+        for (datetime, index) in &account_data.accruals {
             if now - datetime > self.burn_period {
                 continue;
             }
@@ -40,7 +37,7 @@ impl ClaimApi for Contract {
             return ClaimAvailabilityView::Available;
         };
 
-        let now_seconds = (env::block_timestamp_ms() / 1_000) as u32;
+        let now_seconds = unix_timestamp(env::block_timestamp_ms());
 
         if now_seconds - last_claim_at > self.claim_period {
             ClaimAvailabilityView::Available
@@ -49,7 +46,7 @@ impl ClaimApi for Contract {
         }
     }
 
-    fn claim(&mut self) -> PromiseOrValue<U128> {
+    fn claim(&mut self) -> PromiseOrValue<()> {
         let account_id = env::predecessor_account_id();
 
         require!(
@@ -59,7 +56,7 @@ impl ClaimApi for Contract {
 
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
 
-        let now: UnixTimestamp = (env::block_timestamp_ms() / 1000) as u32;
+        let now = unix_timestamp(env::block_timestamp_ms());
         let mut total_accrual: TokensAmount = 0;
 
         for (datetime, index) in &account_data.accruals {

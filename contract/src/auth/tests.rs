@@ -1,6 +1,9 @@
+#![cfg(test)]
+
+use model::api::{AuthApi, InitApi};
 use near_sdk::{test_utils::VMContextBuilder, testing_env, AccountId};
 
-use crate::{auth::api::AuthApi, Contract};
+use crate::Contract;
 
 #[test]
 fn add_oracle_by_contract_owner() {

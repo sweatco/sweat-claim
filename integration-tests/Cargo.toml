@@ -9,14 +9,14 @@ name = "integration_tests"
 
 [dev-dependencies]
 near-sdk = { workspace = true }
-near-units = "0.2.0"
+anyhow = { workspace = true }
+tokio = { workspace = true }
 
-anyhow = "1.0"
+near-units = "0.2.0"
 borsh = "0.10.3"
 maplit = "1.0"
 # arbitrary_precision enabled for u128 types that workspaces requires for Balance types
 serde_json = { version = "1.0.107", features = ["arbitrary_precision"] }
-tokio = { version = "1.32.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 workspaces = "0.7.0"
@@ -25,4 +25,5 @@ pkg-config = "0.3.1"
 [dependencies]
 async-trait = "0.1.73"
 
+integration-utils = { workspace = true }
 model = { workspace = true }

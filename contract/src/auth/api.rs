@@ -1,14 +1,7 @@
-use near_sdk::near_bindgen;
+use model::api::AuthApi;
+use near_sdk::{env::log_str, near_bindgen, require, AccountId};
 
-use crate::*;
-
-pub trait AuthApi {
-    fn add_oracle(&mut self, account_id: AccountId);
-
-    fn remove_oracle(&mut self, account_id: AccountId);
-
-    fn get_oracles(&self) -> Vec<AccountId>;
-}
+use crate::{Contract, ContractExt};
 
 #[near_bindgen]
 impl AuthApi for Contract {

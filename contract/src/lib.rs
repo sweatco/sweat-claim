@@ -1,17 +1,10 @@
-use model::{AccountRecord, ClaimAvailabilityView, Duration, TokensAmount, UnixTimestamp};
+use model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    env,
-    env::log_str,
-    ext_contract, is_promise_success,
-    json_types::U128,
-    near_bindgen, require,
-    serde_json::json,
+    near_bindgen,
     store::{LookupMap, UnorderedMap, UnorderedSet, Vector},
-    AccountId, BorshStorageKey, Gas, PanicOnDefault, Promise, PromiseOrValue,
+    AccountId, BorshStorageKey, PanicOnDefault,
 };
-
-use crate::StorageKey::AccrualsEntry;
 
 mod auth;
 mod burn;
@@ -45,7 +38,7 @@ enum StorageKey {
 }
 
 #[near_bindgen]
-impl Contract {
+impl InitApi for Contract {
     #[init]
     pub fn init(token_account_id: AccountId) -> Self {
         Self::assert_private();
@@ -62,13 +55,13 @@ impl Contract {
         }
     }
 
-    pub fn set_claim_period(&mut self, period: Duration) {
+    fn set_claim_period(&mut self, period: Duration) {
         self.assert_oracle();
 
         self.claim_period = period;
     }
 
-    pub fn set_burn_period(&mut self, period: Duration) {
+    fn set_burn_period(&mut self, period: Duration) {
         self.assert_oracle();
 
         self.burn_period = period;
