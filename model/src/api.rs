@@ -31,5 +31,5 @@ pub trait RecordApi {
 pub trait ClaimApi {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128;
     fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView;
-    fn claim(&mut self) -> PromiseOrValue<()>;
+    fn claim(&mut self) -> PromiseOrValue<U128>;
 }

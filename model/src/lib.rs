@@ -13,4 +13,5 @@ pub type Duration = u32; // Period in seconds
 pub enum ClaimAvailabilityView {
     Available,
     Unavailable((UnixTimestamp, Duration)),
+    Unregistered,
 }
