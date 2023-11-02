@@ -22,8 +22,8 @@ pub struct Contract {
     token_account_id: AccountId,
 
     oracles: UnorderedSet<AccountId>,
-    claim_period: Duration, // Period in milliseconds during which tokens are locked after claim
-    burn_period: Duration,  // Time in milliseconds after that unclaimed tokens are burnt
+    claim_period: Duration, // Period in seconds during which tokens are locked after claim
+    burn_period: Duration,  // Time in seconds after that unclaimed tokens are burnt
 
     accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
     accounts: LookupMap<AccountId, AccountRecord>,
