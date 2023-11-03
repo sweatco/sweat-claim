@@ -11,6 +11,7 @@ mod burn;
 mod claim;
 mod clean;
 mod common;
+mod config;
 mod record;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
@@ -57,17 +58,5 @@ impl InitApi for Contract {
 
             is_service_call_running: false,
         }
-    }
-
-    fn set_claim_period(&mut self, period: Duration) {
-        self.assert_oracle();
-
-        self.claim_period = period;
-    }
-
-    fn set_burn_period(&mut self, period: Duration) {
-        self.assert_oracle();
-
-        self.burn_period = period;
     }
 }

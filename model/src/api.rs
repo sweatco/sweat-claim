@@ -6,8 +6,6 @@ use crate::{ClaimAvailabilityView, Duration};
 #[make_integration_version]
 pub trait InitApi {
     fn init(token_account_id: AccountId) -> Self;
-    fn set_claim_period(&mut self, period: Duration);
-    fn set_burn_period(&mut self, period: Duration);
 }
 
 #[make_integration_version]
