@@ -13,7 +13,7 @@ impl BurnApi for Contract {
         self.is_service_call_running = true;
 
         let mut total_to_burn = 0;
-        let mut keys_to_remove: Vec<UnixTimestamp> = vec![];
+        let mut keys_to_remove = vec![];
         let now = now_seconds();
 
         for (datetime, (_, total)) in self.accruals.iter() {

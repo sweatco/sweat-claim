@@ -6,43 +6,43 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 #[near_bindgen]
 impl ClaimApi for Contract {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
-        if let Some(account_data) = self.accounts.get(&account_id) {
-            let mut total_accrual: TokensAmount = 0;
-            let now = now_seconds();
+        let Some(account_data) = self.accounts.get(&account_id) else {
+            return U128(0);
+        };
 
-            for (datetime, index) in &account_data.accruals {
-                if now - datetime > self.burn_period {
-                    continue;
-                }
+        let mut total_accrual = 0;
+        let now = now_seconds();
 
-                if let Some((accruals, _)) = self.accruals.get(datetime) {
-                    if let Some(amount) = accruals.get(*index) {
-                        total_accrual += *amount;
-                    }
-                }
+        for (datetime, index) in &account_data.accruals {
+            if now - datetime > self.burn_period {
+                continue;
             }
 
-            U128(total_accrual)
-        } else {
-            U128(0)
+            let Some((accruals, _)) = self.accruals.get(datetime) else {
+                continue;
+            };
+
+            if let Some(amount) = accruals.get(*index) {
+                total_accrual += *amount;
+            }
         }
+
+        U128(total_accrual)
     }
 
     fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
-        if let Some(account_data) = self.accounts.get(&account_id) {
-            let Some(last_claim_at) = account_data.last_claim_at else {
-                return ClaimAvailabilityView::Available;
-            };
+        let Some(account_data) = self.accounts.get(&account_id) else {
+            return ClaimAvailabilityView::Unregistered;
+        };
 
-            let now_seconds = now_seconds();
+        let Some(last_claim_at) = account_data.last_claim_at else {
+            return ClaimAvailabilityView::Available;
+        };
 
-            if now_seconds - last_claim_at > self.claim_period {
-                ClaimAvailabilityView::Available
-            } else {
-                ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
-            }
+        if now_seconds() - last_claim_at > self.claim_period {
+            ClaimAvailabilityView::Available
         } else {
-            ClaimAvailabilityView::Unregistered
+            ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
         }
     }
 
@@ -57,23 +57,27 @@ impl ClaimApi for Contract {
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
 
         let now = now_seconds();
-        let mut total_accrual: TokensAmount = 0;
-        let mut details: Vec<(UnixTimestamp, TokensAmount)> = vec![];
+        let mut total_accrual = 0;
+        let mut details = vec![];
 
         for (datetime, index) in &account_data.accruals {
             if now - datetime > self.burn_period {
                 continue;
             }
 
-            if let Some((accruals, total)) = self.accruals.get_mut(datetime) {
-                if let Some(amount) = accruals.get_mut(*index) {
-                    details.push((*datetime, *amount));
+            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
+                continue;
+            };
 
-                    total_accrual += *amount;
-                    *total -= *amount;
-                    *amount = 0;
-                }
-            }
+            let Some(amount) = accruals.get_mut(*index) else {
+                continue;
+            };
+
+            details.push((*datetime, *amount));
+
+            total_accrual += *amount;
+            *total -= *amount;
+            *amount = 0;
         }
 
         account_data.accruals.clear();
