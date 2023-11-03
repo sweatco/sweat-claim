@@ -6,20 +6,13 @@ use crate::{common::unix_timestamp, Contract, ContractExt, StorageKey::AccrualsE
 #[near_bindgen]
 impl RecordApi for Contract {
     fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
-        log_str(&format!("Record batch: {amounts:?}"));
-
-        require!(
-            self.oracles.contains(&env::predecessor_account_id()),
-            "Unauthorized access! Only oracle can do this!"
-        );
+        self.assert_oracle();
 
         let now_seconds = unix_timestamp(env::block_timestamp_ms());
         let mut balances: Vector<TokensAmount> = Vector::new(AccrualsEntry(now_seconds));
         let mut total_balance: TokensAmount = 0;
 
         for (account_id, amount) in amounts {
-            log_str(&format!("Record {amount:?} for {account_id}"));
-
             let amount = amount.0;
 
             total_balance += amount;
