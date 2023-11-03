@@ -7,7 +7,7 @@ use model::{
 use near_sdk::{json_types::U128, PromiseOrValue};
 
 use crate::{
-    claim::api::EXT_TRANSFER_FUTURE,
+    claim::api::test::EXT_TRANSFER_FUTURE,
     common::tests::{data::set_test_future_success, Context},
 };
 

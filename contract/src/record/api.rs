@@ -1,14 +1,16 @@
 use model::{account_record::AccountRecord, api::RecordApi, TokensAmount};
-use near_sdk::{env, json_types::U128, near_bindgen, store::Vector, AccountId};
+use near_sdk::{env::log_str, json_types::U128, near_bindgen, store::Vector, AccountId};
 
-use crate::{common::unix_timestamp, Contract, ContractExt, StorageKey::AccrualsEntry};
+use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
 
 #[near_bindgen]
 impl RecordApi for Contract {
     fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
         self.assert_oracle();
 
-        let now_seconds = unix_timestamp(env::block_timestamp_ms());
+        self.assert_oracle();
+
+        let now_seconds = now_seconds();
         let mut balances: Vector<TokensAmount> = Vector::new(AccrualsEntry(now_seconds));
         let mut total_balance: TokensAmount = 0;
 

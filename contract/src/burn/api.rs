@@ -1,15 +1,7 @@
 use model::{api::BurnApi, TokensAmount, UnixTimestamp};
-use near_sdk::{
-    env, ext_contract, is_promise_success, json_types::U128, near_bindgen, require, serde_json::json, Gas, Promise,
-    PromiseOrValue,
-};
+use near_sdk::{json_types::U128, near_bindgen, require, PromiseOrValue};
 
-#[cfg(test)]
-use crate::common::tests::data::get_test_future_success;
-use crate::{common::unix_timestamp, Contract, ContractExt};
-
-#[cfg(test)]
-pub(crate) const EXT_BURN_FUTURE: &str = "ext_burn";
+use crate::{common::now_seconds, Contract, ContractExt};
 
 #[near_bindgen]
 impl BurnApi for Contract {
@@ -22,7 +14,7 @@ impl BurnApi for Contract {
 
         let mut total_to_burn = 0;
         let mut keys_to_remove: Vec<UnixTimestamp> = vec![];
-        let now: UnixTimestamp = unix_timestamp(env::block_timestamp_ms());
+        let now = now_seconds();
 
         for (datetime, (_, total)) in self.accruals.iter() {
             if now - datetime >= self.burn_period {
@@ -41,57 +33,7 @@ impl BurnApi for Contract {
     }
 }
 
-#[cfg(not(test))]
-#[ext_contract(ext_self)]
-pub trait SelfCallback {
-    fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128;
-}
-
-#[cfg(not(test))]
-#[near_bindgen]
-impl SelfCallback for Contract {
-    fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128 {
-        self.on_burn_internal(total_to_burn, keys_to_remove, is_promise_success())
-    }
-}
-
 impl Contract {
-    #[cfg(not(test))]
-    fn burn_external(
-        &mut self,
-        total_to_burn: TokensAmount,
-        keys_to_remove: Vec<UnixTimestamp>,
-    ) -> PromiseOrValue<U128> {
-        let args = json!({
-            "amount": U128(total_to_burn),
-        })
-        .to_string()
-        .as_bytes()
-        .to_vec();
-
-        Promise::new(self.token_account_id.clone())
-            .function_call("burn".to_string(), args, 0, Gas(5 * Gas::ONE_TERA.0))
-            .then(
-                ext_self::ext(env::current_account_id())
-                    .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
-                    .on_burn(total_to_burn, keys_to_remove),
-            )
-            .into()
-    }
-
-    #[cfg(test)]
-    fn burn_external(
-        &mut self,
-        total_to_burn: TokensAmount,
-        keys_to_remove: Vec<UnixTimestamp>,
-    ) -> PromiseOrValue<U128> {
-        PromiseOrValue::Value(self.on_burn_internal(
-            total_to_burn,
-            keys_to_remove,
-            get_test_future_success(EXT_BURN_FUTURE),
-        ))
-    }
-
     fn on_burn_internal(
         &mut self,
         total_to_burn: TokensAmount,
@@ -108,6 +50,77 @@ impl Contract {
             U128(total_to_burn)
         } else {
             U128(0)
+        }
+    }
+}
+
+#[cfg(not(test))]
+pub(crate) mod not_test {
+    use model::{TokensAmount, UnixTimestamp};
+    use near_sdk::{
+        env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, Gas, Promise,
+        PromiseOrValue,
+    };
+
+    use crate::{Contract, ContractExt};
+
+    #[ext_contract(ext_self)]
+    pub trait SelfCallback {
+        fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128;
+    }
+
+    #[near_bindgen]
+    impl SelfCallback for Contract {
+        fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128 {
+            self.on_burn_internal(total_to_burn, keys_to_remove, is_promise_success())
+        }
+    }
+
+    impl Contract {
+        pub(crate) fn burn_external(
+            &mut self,
+            total_to_burn: TokensAmount,
+            keys_to_remove: Vec<UnixTimestamp>,
+        ) -> PromiseOrValue<U128> {
+            let args = json!({
+                "amount": U128(total_to_burn),
+            })
+            .to_string()
+            .as_bytes()
+            .to_vec();
+
+            Promise::new(self.token_account_id.clone())
+                .function_call("burn".to_string(), args, 0, Gas(5 * Gas::ONE_TERA.0))
+                .then(
+                    ext_self::ext(env::current_account_id())
+                        .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
+                        .on_burn(total_to_burn, keys_to_remove),
+                )
+                .into()
+        }
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod test {
+    use model::{TokensAmount, UnixTimestamp};
+    use near_sdk::{json_types::U128, PromiseOrValue};
+
+    use crate::{common::tests::data::get_test_future_success, Contract};
+
+    pub(crate) const EXT_BURN_FUTURE: &str = "ext_burn";
+
+    impl Contract {
+        pub(crate) fn burn_external(
+            &mut self,
+            total_to_burn: TokensAmount,
+            keys_to_remove: Vec<UnixTimestamp>,
+        ) -> PromiseOrValue<U128> {
+            PromiseOrValue::Value(self.on_burn_internal(
+                total_to_burn,
+                keys_to_remove,
+                get_test_future_success(EXT_BURN_FUTURE),
+            ))
         }
     }
 }
