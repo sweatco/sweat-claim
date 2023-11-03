@@ -42,15 +42,15 @@ impl Contract {
     ) -> U128 {
         self.is_service_call_running = false;
 
-        if is_success {
-            for datetime in keys_to_remove {
-                self.accruals.remove(&datetime);
-            }
-
-            U128(total_to_burn)
-        } else {
-            U128(0)
+        if !is_success {
+            return U128(0);
         }
+
+        for datetime in keys_to_remove {
+            self.accruals.remove(&datetime);
+        }
+
+        U128(total_to_burn)
     }
 }
 

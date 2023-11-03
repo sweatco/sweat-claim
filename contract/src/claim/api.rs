@@ -102,24 +102,22 @@ impl Contract {
 
         if is_success {
             account.last_claim_at = Some(now_seconds());
-
-            U128(total_accrual)
-        } else {
-            for (timestamp, amount) in details {
-                if !self.accruals.contains_key(&timestamp) {
-                    self.accruals
-                        .insert(timestamp, (Vector::new(AccrualsEntry(timestamp)), 0));
-                }
-
-                let daily_accruals = self.accruals.get_mut(&timestamp).unwrap();
-                daily_accruals.0.push(amount);
-                daily_accruals.1 += amount;
-
-                account.accruals.push((timestamp, daily_accruals.0.len() - 1));
-            }
-
-            U128(0)
+            return U128(total_accrual);
         }
+
+        for (timestamp, amount) in details {
+            let daily_accruals = self
+                .accruals
+                .entry(timestamp)
+                .or_insert_with(|| (Vector::new(AccrualsEntry(timestamp)), 0));
+
+            daily_accruals.0.push(amount);
+            daily_accruals.1 += amount;
+
+            account.accruals.push((timestamp, daily_accruals.0.len() - 1));
+        }
+
+        U128(0)
     }
 }
 
