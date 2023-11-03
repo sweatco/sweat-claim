@@ -83,7 +83,7 @@ impl ClaimApi for Contract {
         account_data.accruals.clear();
 
         if total_accrual > 0 {
-            self.transfer_external(account_id, total_accrual, details)
+            self.transfer_external(now, account_id, total_accrual, details)
         } else {
             PromiseOrValue::Value(U128(0))
         }
@@ -93,6 +93,7 @@ impl ClaimApi for Contract {
 impl Contract {
     fn on_transfer_internal(
         &mut self,
+        now: UnixTimestamp,
         account_id: AccountId,
         total_accrual: TokensAmount,
         details: Vec<(UnixTimestamp, TokensAmount)>,
@@ -101,7 +102,7 @@ impl Contract {
         let account = self.accounts.get_mut(&account_id).expect("Account not found");
 
         if is_success {
-            account.last_claim_at = Some(now_seconds());
+            account.last_claim_at = now.into();
             return U128(total_accrual);
         }
 
@@ -135,6 +136,7 @@ mod not_test {
     pub trait SelfCallback {
         fn on_transfer(
             &mut self,
+            now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
@@ -145,17 +147,19 @@ mod not_test {
     impl SelfCallback for Contract {
         fn on_transfer(
             &mut self,
+            now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> U128 {
-            self.on_transfer_internal(account_id, total_accrual, details, is_promise_success())
+            self.on_transfer_internal(now, account_id, total_accrual, details, is_promise_success())
         }
     }
 
     impl Contract {
         pub(crate) fn transfer_external(
             &mut self,
+            now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
@@ -174,7 +178,7 @@ mod not_test {
                 .then(
                     ext_self::ext(env::current_account_id())
                         .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
-                        .on_transfer(account_id, total_accrual, details),
+                        .on_transfer(now, account_id, total_accrual, details),
                 )
                 .into()
         }
@@ -193,11 +197,13 @@ pub(crate) mod test {
     impl Contract {
         pub(crate) fn transfer_external(
             &mut self,
+            now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> PromiseOrValue<U128> {
             PromiseOrValue::Value(self.on_transfer_internal(
+                now,
                 account_id,
                 total_accrual,
                 details,
