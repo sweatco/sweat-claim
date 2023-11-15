@@ -118,7 +118,7 @@ impl ClaimApiIntegration for SweatClaim<'_> {
         .await
     }
 
-    async fn claim(&mut self) -> Result<()> {
+    async fn claim(&mut self) -> Result<U128> {
         self.call_user("claim", ()).await
     }
 }

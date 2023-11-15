@@ -1,4 +1,4 @@
-use model::{api::ClaimApi, AccrualIndex, ClaimAvailabilityView, TokensAmount, UnixTimestamp};
+use model::{api::ClaimApi, ClaimAvailabilityView, TokensAmount, UnixTimestamp};
 use near_sdk::{
     env, ext_contract, is_promise_success, json_types::U128, near_bindgen, require, serde_json::json, store::Vector,
     AccountId, Gas, Promise, PromiseOrValue,
