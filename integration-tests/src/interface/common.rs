@@ -1,7 +1,8 @@
 use integration_utils::integration_contract::IntegrationContract;
 use near_sdk::AccountId;
+use sweat_integration::SweatFt;
 
-use crate::interface::{claim_contract::SweatClaim, ft_contract::SweatFt};
+use crate::interface::claim_contract::SweatClaim;
 
 pub(crate) trait ContractAccount {
     fn account(&self) -> AccountId;

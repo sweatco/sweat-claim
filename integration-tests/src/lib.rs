@@ -6,9 +6,10 @@ use model::{
     ClaimAvailabilityView,
 };
 use near_sdk::json_types::U64;
+use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
-    interface::{common::ContractAccount, ft_contract::FtContractInterface},
+    interface::common::ContractAccount,
     prepare::{prepare_contract, IntegrationContext, BURN_PERIOD, CLAIM_PERIOD},
 };
 
@@ -23,7 +24,7 @@ async fn happy_flow() -> anyhow::Result<()> {
     let manager = context.manager().await?;
 
     let alice_steps = 10_000;
-    let alice_initial_balance = context.ft_contract().ft_balance_of(&alice.to_near()).await?;
+    let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
 
     let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).await?.0;
     let target_fee = target_token_amount * 5 / 100;
@@ -37,7 +38,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     let claim_contract_balance = context
         .ft_contract()
-        .ft_balance_of(&context.sweat_claim().account())
+        .ft_balance_of(context.sweat_claim().account())
         .await?;
 
     assert_eq!(claim_contract_balance.0, target_effective_token_amount);
@@ -60,7 +61,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     context.sweat_claim().with_user(&alice).claim().await?;
 
-    let alice_balance = context.ft_contract().ft_balance_of(&alice.to_near()).await?;
+    let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
     assert_eq!(alice_balance_change, target_effective_token_amount);
 
@@ -88,7 +89,7 @@ async fn burn() -> anyhow::Result<()> {
 
     let claim_contract_balance = context
         .ft_contract()
-        .ft_balance_of(&context.sweat_claim().account())
+        .ft_balance_of(context.sweat_claim().account())
         .await?;
 
     assert_eq!(claim_contract_balance.0, target_effective_token_amount);
