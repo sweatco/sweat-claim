@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use integration_utils::{integration_contract::IntegrationContract, misc::ToNear};
 use model::{
-    api::{AuthApiIntegration, InitApiIntegration},
+    api::{AuthApiIntegration, ConfigApiIntegration, InitApiIntegration},
     Duration,
 };
 use near_sdk::json_types::U128;
