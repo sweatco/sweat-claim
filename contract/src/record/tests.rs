@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use model::api::{ClaimApi, RecordApi};
-use near_sdk::{json_types::U128, test_utils::accounts};
+use near_sdk::json_types::U128;
 
 use crate::common::tests::Context;
 
@@ -33,7 +33,6 @@ fn record_by_oracle() {
     let bob_actual_balance = contract.get_claimable_balance_for_account(accounts.bob.clone());
     assert_eq!(bob_balance, bob_actual_balance.0);
 }
-
 
 #[test]
 #[should_panic(expected = "Record for this timestamp: 0 already existed. It was owerwritten.")]
