@@ -1,7 +1,7 @@
 use integration_trait::make_integration_version;
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
-use crate::{ClaimAvailabilityView, Duration};
+use crate::ClaimAvailabilityView;
 
 #[make_integration_version]
 pub trait InitApi {
