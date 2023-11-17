@@ -1,6 +1,8 @@
 #![cfg(test)]
 
-use crate::{common::tests::Context, config::api::ConfigApi};
+use model::api::ConfigApi;
+
+use crate::common::tests::Context;
 
 #[test]
 fn set_claim_period_by_oracle() {

@@ -5,7 +5,7 @@ use std::time::Duration;
 use model::api::InitApi;
 use near_sdk::{test_utils::VMContextBuilder, testing_env, AccountId};
 
-use crate::{common::unix_timestamp, Contract};
+use crate::Contract;
 
 pub(crate) struct Context {
     builder: VMContextBuilder,
@@ -137,21 +137,4 @@ pub(crate) mod data {
         set_test_future_success(name, true);
         assert!(get_test_future_success(name));
     }
-}
-
-#[test]
-fn convert_milliseconds_to_unix_timestamp_successfully() {
-    let millis: u64 = 1_699_038_575_819;
-    let timestamp = unix_timestamp(millis);
-
-    assert_eq!(1_699_038_575, timestamp);
-}
-
-#[test]
-#[should_panic(expected = "Failed to get convert milliseconds to Unix timestamp")]
-fn convert_milliseconds_to_unix_timestamp_with_unsuccessfully() {
-    let millis: u64 = u64::MAX;
-    let timestamp = unix_timestamp(millis);
-
-    assert_eq!(1_699_038_575, timestamp);
 }

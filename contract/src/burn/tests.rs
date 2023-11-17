@@ -4,7 +4,7 @@ use model::api::{BurnApi, ClaimApi, RecordApi};
 use near_sdk::{json_types::U128, PromiseOrValue};
 
 use crate::{
-    burn::api::EXT_BURN_FUTURE,
+    burn::api::test::EXT_BURN_FUTURE,
     common::tests::{data::set_test_future_success, Context},
 };
 
