@@ -55,7 +55,7 @@ impl Contract {
 }
 
 #[cfg(not(test))]
-pub(crate) mod not_test {
+pub(crate) mod prod {
     use model::{TokensAmount, UnixTimestamp};
     use near_sdk::{
         env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, Gas, Promise,

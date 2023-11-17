@@ -33,3 +33,14 @@ fn record_by_oracle() {
     let bob_actual_balance = contract.get_claimable_balance_for_account(accounts.bob.clone());
     assert_eq!(bob_balance, bob_actual_balance.0);
 }
+
+
+#[test]
+#[should_panic(expected = "Record for this timestamp: 0 already existed. It was owerwritten.")]
+fn test_record() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    context.switch_account(&accounts.oracle);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), 10.into())]);
+    contract.record_batch_for_hold(vec![(accounts.alice, 10.into())]);
+}

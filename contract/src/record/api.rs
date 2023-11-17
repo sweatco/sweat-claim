@@ -38,7 +38,7 @@ impl RecordApi for Contract {
 
         require!(
             existing.is_none(),
-            "Record for this timestamp: {now_seconds} already existed. It was owerwritten."
+            format!("Record for this timestamp: {now_seconds} already existed. It was owerwritten.")
         );
     }
 }
