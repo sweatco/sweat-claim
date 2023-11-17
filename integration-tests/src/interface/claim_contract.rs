@@ -6,8 +6,8 @@ use model::{
     ClaimAvailabilityView, Duration,
 };
 use near_sdk::{json_types::U128, AccountId};
+use near_workspaces::{Account, Contract};
 use serde_json::json;
-use workspaces::{Account, Contract};
 
 pub const SWEAT_CLAIM: &str = "sweat_claim";
 
@@ -118,7 +118,7 @@ impl ClaimApiIntegration for SweatClaim<'_> {
         .await
     }
 
-    async fn claim(&mut self) -> Result<()> {
+    async fn claim(&mut self) -> Result<U128> {
         self.call_user("claim", ()).await
     }
 }

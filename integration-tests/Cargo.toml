@@ -8,7 +8,9 @@ edition = "2021"
 name = "integration_tests"
 
 [dev-dependencies]
+near-workspaces = { workspace = true }
 near-sdk = { workspace = true }
+near-contract-standards = { workspace = true }
 anyhow = { workspace = true }
 tokio = { workspace = true }
 
@@ -19,11 +21,12 @@ maplit = "1.0"
 serde_json = { version = "1.0.107", features = ["arbitrary_precision"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
-workspaces = "0.7.0"
 pkg-config = "0.3.1"
 
 [dependencies]
 async-trait = "0.1.73"
 
-integration-utils = { workspace = true }
 model = { workspace = true }
+sweat-model = { workspace = true }
+sweat-integration = { workspace = true }
+integration-utils = { workspace = true }
