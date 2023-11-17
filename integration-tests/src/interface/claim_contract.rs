@@ -2,7 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use integration_utils::integration_contract::IntegrationContract;
 use model::{
-    api::{AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, InitApiIntegration, RecordApiIntegration},
+    api::{
+        AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ConfigApiIntegration, InitApiIntegration,
+        RecordApiIntegration,
+    },
     ClaimAvailabilityView, Duration,
 };
 use near_sdk::{json_types::U128, AccountId};
@@ -27,7 +30,10 @@ impl InitApiIntegration for SweatClaim<'_> {
         )
         .await
     }
+}
 
+#[async_trait]
+impl ConfigApiIntegration for SweatClaim<'_> {
     async fn set_claim_period(&mut self, period: Duration) -> Result<()> {
         self.call_user(
             "set_claim_period",
@@ -118,7 +124,7 @@ impl ClaimApiIntegration for SweatClaim<'_> {
         .await
     }
 
-    async fn claim(&mut self) -> Result<()> {
+    async fn claim(&mut self) -> Result<U128> {
         self.call_user("claim", ()).await
     }
 }
