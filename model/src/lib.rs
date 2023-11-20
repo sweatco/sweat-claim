@@ -1,5 +1,6 @@
 pub mod account_record;
 pub mod api;
+pub mod event;
 
 use near_sdk::serde::{Deserialize, Serialize};
 

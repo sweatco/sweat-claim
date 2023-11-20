@@ -1,4 +1,8 @@
-use model::{api::BurnApi, TokensAmount, UnixTimestamp};
+use model::{
+    api::BurnApi,
+    event::{emit, BurnData, EventKind},
+    TokensAmount, UnixTimestamp,
+};
 use near_sdk::{json_types::U128, near_bindgen, require, PromiseOrValue};
 
 use crate::{common::now_seconds, Contract, ContractExt};
@@ -49,6 +53,10 @@ impl Contract {
         for datetime in keys_to_remove {
             self.accruals.remove(&datetime);
         }
+
+        emit(EventKind::Burn(BurnData {
+            burnt_amount: U128(total_to_burn),
+        }));
 
         U128(total_to_burn)
     }
