@@ -1,4 +1,8 @@
-use model::{api::ClaimApi, ClaimAvailabilityView, TokensAmount, UnixTimestamp};
+use model::{
+    api::ClaimApi,
+    event::{emit, ClaimData, EventKind},
+    ClaimAvailabilityView, TokensAmount, UnixTimestamp,
+};
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
@@ -103,6 +107,16 @@ impl Contract {
 
         if is_success {
             account.last_claim_at = now.into();
+
+            let event_data = ClaimData {
+                details: details
+                    .iter()
+                    .map(|(timestamp, amount)| (*timestamp, U128(*amount)))
+                    .collect(),
+                total_claimed: U128(total_accrual),
+            };
+            emit(EventKind::Claim(event_data));
+
             return U128(total_accrual);
         }
 
