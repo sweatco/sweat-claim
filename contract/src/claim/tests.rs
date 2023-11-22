@@ -100,7 +100,7 @@ fn test_claim_when_user_has_tokens_and_claim_period_is_passed() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(alice_balance, claimed_amount.0);
+    assert_eq!(alice_balance, claimed_amount.total.0);
 
     let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
     assert_eq!(0, alice_new_balance);
@@ -122,7 +122,7 @@ fn test_claim_when_user_has_tokens_and_burn_period_is_passed() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(0, claimed_amount.0);
+    assert_eq!(0, claimed_amount.total.0);
 
     let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
     assert_eq!(0, alice_new_balance);
@@ -144,7 +144,7 @@ fn test_claim_when_user_has_tokens_and_claim_period_is_passed_and_transfer_faile
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(0, claimed_amount.0);
+    assert_eq!(0, claimed_amount.total.0);
 
     let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
     assert_eq!(alice_balance, alice_new_balance);
