@@ -6,7 +6,7 @@ use model::{
         AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ConfigApiIntegration, InitApiIntegration,
         RecordApiIntegration,
     },
-    ClaimAvailabilityView, Duration,
+    ClaimAvailabilityView, ClaimResultView, Duration,
 };
 use near_sdk::{json_types::U128, AccountId};
 use near_workspaces::{Account, Contract};
@@ -124,7 +124,7 @@ impl ClaimApiIntegration for SweatClaim<'_> {
         .await
     }
 
-    async fn claim(&mut self) -> Result<U128> {
+    async fn claim(&mut self) -> Result<ClaimResultView> {
         self.call_user("claim", ()).await
     }
 }
