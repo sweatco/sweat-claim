@@ -34,6 +34,7 @@ pub struct BurnData {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ClaimData {
+    pub account_id: AccountId,
     pub details: Vec<(UnixTimestamp, U128)>,
     pub total_claimed: U128,
 }

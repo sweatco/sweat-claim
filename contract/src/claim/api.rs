@@ -109,6 +109,7 @@ impl Contract {
             account.last_claim_at = now.into();
 
             let event_data = ClaimData {
+                account_id,
                 details: details
                     .iter()
                     .map(|(timestamp, amount)| (*timestamp, U128(*amount)))
