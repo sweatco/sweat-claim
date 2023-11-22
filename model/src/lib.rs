@@ -2,7 +2,10 @@ pub mod account_record;
 pub mod api;
 pub mod event;
 
-use near_sdk::serde::{Deserialize, Serialize};
+use near_sdk::{
+    json_types::U128,
+    serde::{Deserialize, Serialize},
+};
 
 pub type UnixTimestamp = u32;
 pub type AccrualIndex = u32;
@@ -15,4 +18,15 @@ pub enum ClaimAvailabilityView {
     Available,
     Unavailable((UnixTimestamp, Duration)),
     Unregistered,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct ClaimResultView {
+    pub total: U128,
+}
+
+impl ClaimResultView {
+    pub fn new(total: u128) -> Self {
+        Self { total: U128(total) }
+    }
 }

@@ -1,7 +1,7 @@
 use model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAvailabilityView, TokensAmount, UnixTimestamp,
+    ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
@@ -50,7 +50,7 @@ impl ClaimApi for Contract {
         }
     }
 
-    fn claim(&mut self) -> PromiseOrValue<U128> {
+    fn claim(&mut self) -> PromiseOrValue<ClaimResultView> {
         let account_id = env::predecessor_account_id();
 
         require!(
@@ -89,7 +89,7 @@ impl ClaimApi for Contract {
         if total_accrual > 0 {
             self.transfer_external(now, account_id, total_accrual, details)
         } else {
-            PromiseOrValue::Value(U128(0))
+            PromiseOrValue::Value(ClaimResultView::new(0))
         }
     }
 }
@@ -102,7 +102,7 @@ impl Contract {
         total_accrual: TokensAmount,
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
-    ) -> U128 {
+    ) -> ClaimResultView {
         let account = self.accounts.get_mut(&account_id).expect("Account not found");
 
         if is_success {
@@ -118,7 +118,7 @@ impl Contract {
             };
             emit(EventKind::Claim(event_data));
 
-            return U128(total_accrual);
+            return ClaimResultView::new(total_accrual);
         }
 
         for (timestamp, amount) in details {
@@ -133,16 +133,15 @@ impl Contract {
             account.accruals.push((timestamp, daily_accruals.0.len() - 1));
         }
 
-        U128(0)
+        ClaimResultView::new(0)
     }
 }
 
 #[cfg(not(test))]
 mod prod {
-    use model::{TokensAmount, UnixTimestamp};
+    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
     use near_sdk::{
-        env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, AccountId, Gas,
-        Promise, PromiseOrValue,
+        env, ext_contract, is_promise_success, near_bindgen, serde_json::json, AccountId, Gas, Promise, PromiseOrValue,
     };
 
     use crate::{Contract, ContractExt};
@@ -155,7 +154,7 @@ mod prod {
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
-        ) -> U128;
+        ) -> ClaimResultView;
     }
 
     #[near_bindgen]
@@ -166,7 +165,7 @@ mod prod {
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
-        ) -> U128 {
+        ) -> ClaimResultView {
             self.on_transfer_internal(now, account_id, total_accrual, details, is_promise_success())
         }
     }
@@ -178,7 +177,7 @@ mod prod {
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
-        ) -> PromiseOrValue<U128> {
+        ) -> PromiseOrValue<ClaimResultView> {
             let args = json!({
                 "receiver_id": account_id,
                 "amount": total_accrual.to_string(),
@@ -202,8 +201,8 @@ mod prod {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use model::{TokensAmount, UnixTimestamp};
-    use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
+    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use near_sdk::{AccountId, PromiseOrValue};
 
     use crate::{common::tests::data::get_test_future_success, Contract};
 
@@ -216,7 +215,7 @@ pub(crate) mod test {
             account_id: AccountId,
             total_accrual: TokensAmount,
             details: Vec<(UnixTimestamp, TokensAmount)>,
-        ) -> PromiseOrValue<U128> {
+        ) -> PromiseOrValue<ClaimResultView> {
             PromiseOrValue::Value(self.on_transfer_internal(
                 now,
                 account_id,
