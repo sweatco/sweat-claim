@@ -124,6 +124,8 @@ pub trait BurnApi {
     ///
     /// Panics if called by any entity other than the oracle. Only the oracle has the
     /// authority to initiate the burn process.
+    ///
+    /// Panics if another service call is running.
     fn burn(&mut self) -> PromiseOrValue<U128>;
 }
 
@@ -144,7 +146,7 @@ pub trait RecordApi {
     ///
     /// # Panics
     ///
-    /// Panics if called by any account other than `Contract.token_account_id`.
+    /// Panics if called by any account other than an oracle.
     fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>);
 }
 

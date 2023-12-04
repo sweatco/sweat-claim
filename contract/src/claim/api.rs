@@ -59,6 +59,7 @@ impl ClaimApi for Contract {
         );
 
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
+        account_data.is_locked = true;
 
         let now = now_seconds();
         let mut total_accrual = 0;
@@ -89,6 +90,7 @@ impl ClaimApi for Contract {
         if total_accrual > 0 {
             self.transfer_external(now, account_id, total_accrual, details)
         } else {
+            account_data.is_locked = false;
             PromiseOrValue::Value(ClaimResultView::new(0))
         }
     }
@@ -104,6 +106,7 @@ impl Contract {
         is_success: bool,
     ) -> ClaimResultView {
         let account = self.accounts.get_mut(&account_id).expect("Account not found");
+        account.is_locked = false;
 
         if is_success {
             account.last_claim_at = now.into();
