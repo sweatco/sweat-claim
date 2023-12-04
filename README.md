@@ -67,6 +67,7 @@ The contract furthermore caters for edge cases in user behaviour which current p
 The following users provide some context as to how users will interact with the contract from the Sweat Wallet application. 
 
 ### Server side
+
 -------------------------------------
 
 1. As a server I want to impose a 48 hour count down time (offchain) which prevents the "Claim" button from being active. After the 48 hours have matured, the Claim button should be shown as active such that a user may interact with it.
@@ -76,6 +77,7 @@ The following users provide some context as to how users will interact with the 
 5. As a server I want to limit contract interaction by requiring an active Sweat Wallet UUID that matches a valid keypair to prevent access to the contracts function from independent users (users not using an active Sweat Wallet session)
 
 ### Client side
+
 -------------------------------------
 
 1. As a user I want to view my accrued $SWEAT in-app
@@ -86,3 +88,9 @@ The following users provide some context as to how users will interact with the 
 6. As a user I want to see the gas fee displayed before interacting in any way with the claim contract.
 7. As a user I want to receive logical error messages when a contract interaction fails e.g. insufficient NEAR or $SWEAT to cover gas fees, etc. or any reason that causes the contract to panic.
 8. As a user I want to receive notifications before an method is called in the claim contract by the server that affects my unclaimed balance in the smart contract (offchain functionality) 
+
+# Implementation
+
+## Interaction within the system
+
+![contracts_interaction.png](doc/contracts_interaction.png)

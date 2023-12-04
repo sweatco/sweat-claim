@@ -10,7 +10,7 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 #[near_bindgen]
 impl RecordApi for Contract {
     fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
-        self.assert_oracle();
+        self.assert_ft_contract();
 
         let now_seconds = now_seconds();
         let mut balances = Vector::new(AccrualsEntry(now_seconds));

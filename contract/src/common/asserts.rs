@@ -3,6 +3,13 @@ use near_sdk::{env, require};
 use crate::Contract;
 
 impl Contract {
+    pub(crate) fn assert_ft_contract(&self) {
+        require!(
+            env::predecessor_account_id() == self.token_account_id,
+            "Unauthorized access! Only FT contract can do this!"
+        );
+    }
+
     pub(crate) fn assert_oracle(&self) {
         require!(
             self.oracles.contains(&env::predecessor_account_id()),
