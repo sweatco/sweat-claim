@@ -17,18 +17,53 @@ mod record;
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
 const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
 
+/// The main structure representing a smart contract for managing fungible tokens.
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
+    /// The account ID of the fungible token contract serviced by this smart contract.
+    ///
+    /// This field specifies the associated fungible token contract with which this smart
+    /// contract interacts.
     token_account_id: AccountId,
 
+    /// A set of account IDs authorized to perform sensitive operations within the contract.
+    ///
+    /// `oracles` represents the entities that have the authority to execute critical
+    /// functions such as burning tokens. These accounts are trusted and have elevated privileges.
     oracles: UnorderedSet<AccountId>,
-    claim_period: Duration, // Period in seconds during which tokens are locked after claim
-    burn_period: Duration,  // Time in seconds after that unclaimed tokens are burnt
 
+    /// The period in seconds during which tokens are locked after being claimed.
+    ///
+    /// `claim_period` defines the duration for which the tokens remain locked and
+    /// untransferable after a user claims them. This lock period helps in managing the
+    /// token lifecycle and user claims.
+    claim_period: Duration,
+
+    /// The period in seconds after which unclaimed tokens are eligible to be burnt.
+    ///
+    /// `burn_period` specifies the timeframe after which tokens that haven't been claimed
+    /// are considered for burning, helping in regulating the token supply.
+    burn_period: Duration,
+
+    /// A ledger storing the timestamps of recordings and the corresponding user accruals.
+    ///
+    /// `accruals` does not contain account IDs directly but correlates with `AccountRecord`
+    /// entries in the `accounts` field. It is essential for tracking token accruals over time.
     accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
+
+    /// A map containing accrual and service details for each user account.
+    ///
+    /// `accounts` holds individual records for users, detailing their accrued tokens and
+    /// related service information. It works in conjunction with `accruals` to provide a
+    /// comprehensive view of each user's token status.
     accounts: LookupMap<AccountId, AccountRecord>,
 
+    /// Indicates whether a service call is currently in progress.
+    ///
+    /// `is_service_call_running` is used to prevent double spending by indicating if the
+    /// contract is currently executing a service call. This flag ensures the integrity of
+    /// token transactions and operations within the contract.
     is_service_call_running: bool,
 }
 

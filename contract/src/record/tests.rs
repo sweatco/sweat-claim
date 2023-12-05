@@ -35,7 +35,7 @@ fn record_by_oracle() {
 }
 
 #[test]
-#[should_panic(expected = "Record for this timestamp: 0 already existed. It was owerwritten.")]
+#[should_panic(expected = "Record for this timestamp: 0 already existed. It was overwritten.")]
 fn test_record() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
