@@ -6,13 +6,16 @@ use model::{
     ClaimAvailabilityView,
 };
 use near_sdk::json_types::U64;
+use serde_json::json;
 use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
+    common::PanicFinder,
     interface::common::ContractAccount,
     prepare::{prepare_contract, IntegrationContext, BURN_PERIOD, CLAIM_PERIOD},
 };
 
+mod common;
 mod interface;
 mod prepare;
 
@@ -188,6 +191,52 @@ async fn outdate() -> anyhow::Result<()> {
         .get_claimable_balance_for_account(alice.to_near())
         .await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn on_burn_direct_call() -> anyhow::Result<()> {
+    let mut context = prepare_contract().await?;
+
+    let alice = context.alice().await?;
+
+    let result = alice
+        .call(context.sweat_claim().contract().as_account().id(), "on_burn")
+        .args_json(json!({
+            "total_to_burn": "100000",
+            "keys_to_remove": vec![1702303000, 1702304333],
+        }))
+        .max_gas()
+        .transact()
+        .await?
+        .into_result();
+
+    assert!(result.has_panic("Method on_burn is private"));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn on_transfer_direct_call() -> anyhow::Result<()> {
+    let mut context = prepare_contract().await?;
+
+    let alice = context.alice().await?;
+
+    let result = alice
+        .call(context.sweat_claim().contract().as_account().id(), "on_transfer")
+        .args_json(json!({
+            "now": 1702304333,
+            "account_id": alice.id().to_string(),
+            "total_accrual": "100000",
+            "details": vec![(1702303000, "100000")],
+        }))
+        .max_gas()
+        .transact()
+        .await?
+        .into_result();
+
+    assert!(result.has_panic("Method on_transfer is private"));
 
     Ok(())
 }

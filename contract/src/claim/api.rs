@@ -162,6 +162,7 @@ mod prod {
 
     #[near_bindgen]
     impl SelfCallback for Contract {
+        #[private]
         fn on_transfer(
             &mut self,
             now: UnixTimestamp,
