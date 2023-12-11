@@ -79,6 +79,7 @@ pub(crate) mod prod {
 
     #[near_bindgen]
     impl SelfCallback for Contract {
+        #[private]
         fn on_burn(&mut self, total_to_burn: TokensAmount, keys_to_remove: Vec<UnixTimestamp>) -> U128 {
             self.on_burn_internal(total_to_burn, keys_to_remove, is_promise_success())
         }
