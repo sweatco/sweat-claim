@@ -39,14 +39,11 @@ impl ClaimApi for Contract {
             return ClaimAvailabilityView::Unregistered;
         };
 
-        let Some(last_claim_at) = account_data.last_claim_at else {
-            return ClaimAvailabilityView::Available;
-        };
-
-        if now_seconds() - last_claim_at > self.claim_period {
+        let claim_period_refreshed_at = account_data.claim_period_refreshed_at;
+        if now_seconds() - claim_period_refreshed_at > self.claim_period {
             ClaimAvailabilityView::Available
         } else {
-            ClaimAvailabilityView::Unavailable((last_claim_at, self.claim_period))
+            ClaimAvailabilityView::Unavailable((claim_period_refreshed_at, self.claim_period))
         }
     }
 
@@ -109,7 +106,7 @@ impl Contract {
         account.is_locked = false;
 
         if is_success {
-            account.last_claim_at = now.into();
+            account.claim_period_refreshed_at = now.into();
 
             let event_data = ClaimData {
                 account_id,

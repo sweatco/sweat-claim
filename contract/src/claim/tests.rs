@@ -1,9 +1,6 @@
 #![cfg(test)]
 
-use model::{
-    api::{ClaimApi, RecordApi},
-    ClaimAvailabilityView,
-};
+use model::{api::{ClaimApi, RecordApi}, ClaimAvailabilityView, UnixTimestamp};
 use near_sdk::{json_types::U128, PromiseOrValue};
 
 use crate::{
@@ -23,7 +20,56 @@ fn test_check_claim_availability_when_user_is_not_registered() {
 }
 
 #[test]
-fn test_check_claim_availability_when_user_has_tokens_and_claim_period_is_not_passed() {
+fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_claim_is_not_passed() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    let alice_balance = 400_000;
+    context.switch_account(&accounts.oracle);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance))]);
+
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
+    assert_eq!(alice_balance, alice_new_balance);
+
+    let claim_timestamp = contract.claim_period as u64 + 100;
+    context.set_block_timestamp_in_seconds(claim_timestamp);
+    context.switch_account(&accounts.alice);
+    contract.claim();
+
+    let check_timestamp = claim_timestamp + 10;
+    context.set_block_timestamp_in_seconds(check_timestamp);
+
+    let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
+    assert_eq!(
+        alice_can_claim,
+        ClaimAvailabilityView::Unavailable((claim_timestamp as UnixTimestamp, contract.claim_period))
+    );
+}
+
+#[test]
+fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_claim_is_passed() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    let alice_balance = 300_000;
+    context.switch_account(&accounts.oracle);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance))]);
+
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
+    assert_eq!(alice_balance, alice_new_balance);
+
+    let claim_timestamp = contract.claim_period as u64 + 100;
+    context.set_block_timestamp_in_seconds(claim_timestamp);
+    context.switch_account(&accounts.alice);
+    contract.claim();
+
+    let check_timestamp = claim_timestamp + contract.claim_period as u64 + 100;
+    context.set_block_timestamp_in_seconds(check_timestamp);
+
+    let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available);
+}
+
+#[test]
+fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_record_creation_is_not_passed() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
     let alice_balance = 400_000;
@@ -41,7 +87,7 @@ fn test_check_claim_availability_when_user_has_tokens_and_claim_period_is_not_pa
 }
 
 #[test]
-fn test_check_claim_availability_when_user_has_tokens_and_claim_period_is_passed() {
+fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_record_creation_is_passed() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
     let alice_balance = 300_000;

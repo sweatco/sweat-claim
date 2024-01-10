@@ -26,11 +26,13 @@ pub struct AccountRecord {
     /// particular account.
     pub is_enabled: bool,
 
-    /// The timestamp of the last claim operation performed by the account.
+    /// The timestamp of the last event that resets claim period.
+    /// It can be either creation of the record or claim operation performed by the account.
     ///
-    /// `last_claim_at` holds an `Option<UnixTimestamp>` that records the time when the user
-    /// last claimed their tokens. It is used to determine eligibility for future claims.
-    pub last_claim_at: Option<UnixTimestamp>,
+    /// `claim_period_refreshed_at` holds an `UnixTimestamp` that records either the time when
+    /// the record was created or when the user last claimed their tokens.
+    /// It is used to determine eligibility for future claims.
+    pub claim_period_refreshed_at: UnixTimestamp,
 
     /// Indicates whether there is an active operation on the user's balance.
     ///
@@ -40,12 +42,12 @@ pub struct AccountRecord {
     pub is_locked: bool,
 }
 
-impl Default for AccountRecord {
-    fn default() -> Self {
+impl AccountRecord {
+    pub fn new(now: UnixTimestamp) -> Self {
         Self {
             accruals: Vec::new(),
             is_enabled: true,
-            last_claim_at: None,
+            claim_period_refreshed_at: now,
             is_locked: false,
         }
     }
