@@ -11,4 +11,4 @@ anyhow = { workspace = true }
 near-sdk = { workspace = true }
 async-trait = { workspace = true }
 integration-trait = { workspace = true }
-serde = "1.0.193"
+serde = "1.0.195"
