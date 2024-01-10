@@ -18,7 +18,7 @@ deploy: ##@Deploy Deploy the contract to dev account on Testnet.
 	./scripts/deploy.sh
 
 cov: ##@Testing Run unit tests with coverage.
-	cargo llvm-cov --hide-instantiations --open
+	cargo llvm-cov --hide-instantiations --open --ignore-filename-regex tests.rs
 
 test: ##@Testing Run unit tests.
 	cargo test --package sweat_claim
