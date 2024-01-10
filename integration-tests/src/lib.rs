@@ -7,7 +7,7 @@ use model::{
 };
 use near_sdk::json_types::U64;
 use serde_json::json;
-use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
+use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration};
 
 use crate::{
     common::PanicFinder,

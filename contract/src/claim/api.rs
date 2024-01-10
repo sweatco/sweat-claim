@@ -106,7 +106,7 @@ impl Contract {
         account.is_locked = false;
 
         if is_success {
-            account.claim_period_refreshed_at = now.into();
+            account.claim_period_refreshed_at = now;
 
             let event_data = ClaimData {
                 account_id,

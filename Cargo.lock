@@ -1686,7 +1686,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "borsh 0.10.3",
- "integration-utils",
+ "integration-utils 0.1.0 (git+https://github.com/sweatco/integration-utils.git?rev=0b3c2faf0db31cdb3481be4d35dbb48b62a98618)",
  "maplit",
  "model",
  "near-contract-standards",
@@ -1713,9 +1713,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "integration-trait"
+version = "0.1.0"
+source = "git+https://github.com/sweatco/integration-trait.git?rev=8dd8b63cef5e60448629a8903ea43b642bbf9f45#8dd8b63cef5e60448629a8903ea43b642bbf9f45"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.38",
+]
+
+[[package]]
 name = "integration-utils"
 version = "0.1.0"
 source = "git+https://github.com/sweatco/integration-utils.git?rev=0b3c2faf0db31cdb3481be4d35dbb48b62a98618#0b3c2faf0db31cdb3481be4d35dbb48b62a98618"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "dotenv",
+ "fake",
+ "futures",
+ "itertools 0.11.0",
+ "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-units",
+ "near-workspaces",
+ "tokio",
+]
+
+[[package]]
+name = "integration-utils"
+version = "0.1.0"
+source = "git+https://github.com/sweatco/integration-utils.git?rev=9fe6398c6064dfe8a26c323a6d0ea3c117a0b4a5#9fe6398c6064dfe8a26c323a6d0ea3c117a0b4a5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1957,7 +1984,7 @@ version = "1.0.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "integration-trait",
+ "integration-trait 0.1.0 (git+https://github.com/sweatco/integration-trait.git?rev=83a69f7ba4acab9405bf935f7dfc70f2f5279c40)",
  "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
  "serde",
 ]
@@ -3834,11 +3861,11 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "sweat-integration"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=82b5acf1c743d38191b996dc8eff3ac289e467d6#82b5acf1c743d38191b996dc8eff3ac289e467d6"
+source = "git+https://github.com/sweatco/sweat-near?rev=975f9ae2f0c1c2f07af70c60840ed74a8c9ac9f4#975f9ae2f0c1c2f07af70c60840ed74a8c9ac9f4"
 dependencies = [
  "anyhow",
  "async-trait",
- "integration-utils",
+ "integration-utils 0.1.0 (git+https://github.com/sweatco/integration-utils.git?rev=9fe6398c6064dfe8a26c323a6d0ea3c117a0b4a5)",
  "near-contract-standards",
  "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
  "near-units",
@@ -3849,11 +3876,11 @@ dependencies = [
 [[package]]
 name = "sweat-model"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=82b5acf1c743d38191b996dc8eff3ac289e467d6#82b5acf1c743d38191b996dc8eff3ac289e467d6"
+source = "git+https://github.com/sweatco/sweat-near?rev=975f9ae2f0c1c2f07af70c60840ed74a8c9ac9f4#975f9ae2f0c1c2f07af70c60840ed74a8c9ac9f4"
 dependencies = [
  "anyhow",
  "async-trait",
- "integration-trait",
+ "integration-trait 0.1.0 (git+https://github.com/sweatco/integration-trait.git?rev=8dd8b63cef5e60448629a8903ea43b642bbf9f45)",
  "near-contract-standards",
  "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
 ]
