@@ -1694,7 +1694,6 @@ dependencies = [
  "near-units",
  "near-workspaces",
  "pkg-config",
- "serde_json",
  "sweat-integration",
  "sweat-model",
  "tokio",
@@ -1959,7 +1958,6 @@ dependencies = [
  "async-trait",
  "integration-trait",
  "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
- "serde",
 ]
 
 [[package]]

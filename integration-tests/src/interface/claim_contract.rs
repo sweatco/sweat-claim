@@ -8,9 +8,8 @@ use model::{
     },
     ClaimAvailabilityView, ClaimResultView, Duration,
 };
-use near_sdk::{json_types::U128, AccountId};
+use near_sdk::{json_types::U128, serde_json::json, AccountId};
 use near_workspaces::{Account, Contract};
-use serde_json::json;
 
 pub const SWEAT_CLAIM: &str = "sweat_claim";
 
