@@ -1685,7 +1685,7 @@ dependencies = [
  "maplit",
  "model",
  "near-contract-standards",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
  "near-units",
  "near-workspaces",
  "pkg-config",
@@ -1716,7 +1716,8 @@ dependencies = [
  "dotenv",
  "fake",
  "futures",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "itertools 0.11.0",
+ "near-sdk",
  "near-units",
  "near-workspaces",
  "tokio",
@@ -1942,8 +1943,8 @@ dependencies = [
  "anyhow",
  "async-trait",
  "integration-trait",
- "integration-utils",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
+ "serde",
 ]
 
 [[package]]
@@ -2041,7 +2042,7 @@ name = "near-contract-standards"
 version = "4.1.1"
 source = "git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd#8c48b26cc48d969c1e5f3162141fe9c824fccecd"
 dependencies = [
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
  "schemars",
  "serde",
  "serde_json",
@@ -2348,29 +2349,6 @@ dependencies = [
 [[package]]
 name = "near-sdk"
 version = "4.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15eb3de2defe3626260cc209a6cdb985c6b27b0bd4619fad97dcfae002c3c5bd"
-dependencies = [
- "base64 0.13.1",
- "borsh 0.9.3",
- "bs58 0.4.0",
- "near-abi",
- "near-crypto 0.14.0",
- "near-primitives 0.14.0",
- "near-primitives-core 0.14.0",
- "near-sdk-macros 4.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "near-sys 0.2.1",
- "near-vm-logic",
- "once_cell",
- "schemars",
- "serde",
- "serde_json",
- "wee_alloc",
-]
-
-[[package]]
-name = "near-sdk"
-version = "4.1.1"
 source = "git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd#8c48b26cc48d969c1e5f3162141fe9c824fccecd"
 dependencies = [
  "base64 0.13.1",
@@ -2380,26 +2358,14 @@ dependencies = [
  "near-crypto 0.14.0",
  "near-primitives 0.14.0",
  "near-primitives-core 0.14.0",
- "near-sdk-macros 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
- "near-sys 0.2.0",
+ "near-sdk-macros",
+ "near-sys",
  "near-vm-logic",
  "once_cell",
  "schemars",
  "serde",
  "serde_json",
  "wee_alloc",
-]
-
-[[package]]
-name = "near-sdk-macros"
-version = "4.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4907affc9f5ed559456509188ff0024f1f2099c0830e6bdb66eb61d5b75912c0"
-dependencies = [
- "Inflector",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -2423,12 +2389,6 @@ checksum = "6540152fba5e96fe5d575b79e8cd244cf2add747bb01362426bdc069bc3a23bc"
 name = "near-sys"
 version = "0.2.0"
 source = "git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd#8c48b26cc48d969c1e5f3162141fe9c824fccecd"
-
-[[package]]
-name = "near-sys"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "397688591acf8d3ebf2c2485ba32d4b24fc10aad5334e3ad8ec0b7179bfdf06b"
 
 [[package]]
 name = "near-token"
@@ -2541,7 +2501,7 @@ dependencies = [
  "near-jsonrpc-primitives",
  "near-primitives 0.17.0",
  "near-sandbox-utils",
- "near-sdk 4.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "near-sdk",
  "near-token",
  "rand 0.8.5",
  "reqwest",
@@ -3825,7 +3785,7 @@ dependencies = [
  "async-trait",
  "integration-utils",
  "near-contract-standards",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
  "near-units",
  "near-workspaces",
  "sweat-model",
@@ -3841,7 +3801,7 @@ dependencies = [
  "integration-trait",
  "integration-utils",
  "near-contract-standards",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
 ]
 
 [[package]]
@@ -3849,7 +3809,7 @@ name = "sweat_claim"
 version = "1.0.0"
 dependencies = [
  "model",
- "near-sdk 4.1.1 (git+https://github.com/sweatco/near-sdk-rs?rev=8c48b26cc48d969c1e5f3162141fe9c824fccecd)",
+ "near-sdk",
 ]
 
 [[package]]
