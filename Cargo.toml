@@ -12,12 +12,12 @@ anyhow = "1.0.79"
 async-trait = "0.1.77"
 tokio = "1.28"
 
-integration-trait = { git = "https://github.com/sweatco/integration-trait.git", rev = "83a69f7ba4acab9405bf935f7dfc70f2f5279c40" }
-integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "0b3c2faf0db31cdb3481be4d35dbb48b62a98618" }
+integration-trait = { git = "https://github.com/sweatco/integration-utils.git", rev = "b3e5b747b930ebc04601146deda13f12615d5e01" }
+integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "b3e5b747b930ebc04601146deda13f12615d5e01" }
 
 model = { path = "model" }
-sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "82b5acf1c743d38191b996dc8eff3ac289e467d6" }
-sweat-integration = { git = "https://github.com/sweatco/sweat-near", rev = "82b5acf1c743d38191b996dc8eff3ac289e467d6" }
+sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "7ad72657efdd3c891e8cb3ae34050fc57bab01e6" }
+sweat-integration = { git = "https://github.com/sweatco/sweat-near", rev = "7ad72657efdd3c891e8cb3ae34050fc57bab01e6" }
 
 near-workspaces = "0.9.0"
 near-sdk = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }

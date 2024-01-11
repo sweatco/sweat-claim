@@ -24,7 +24,7 @@ pkg-config = "0.3.28"
 [dependencies]
 async-trait = { workspace = true }
 
-model = { workspace = true }
-sweat-model = { workspace = true }
+model = { workspace = true, features = ["integration-test"] }
+sweat-model = { workspace = true, features = ["integration-test"] }
 sweat-integration = { workspace = true }
 integration-utils = { workspace = true }

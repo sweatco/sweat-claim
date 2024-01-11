@@ -1,6 +1,5 @@
-use anyhow::Result;
 use async_trait::async_trait;
-use integration_utils::integration_contract::IntegrationContract;
+use integration_utils::{contract_call::ContractCall, integration_contract::IntegrationContract};
 use model::{
     api::{
         AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ConfigApiIntegration, InitApiIntegration,
@@ -9,143 +8,111 @@ use model::{
     ClaimAvailabilityView, ClaimResultView, Duration,
 };
 use near_sdk::{json_types::U128, serde_json::json, AccountId};
-use near_workspaces::{Account, Contract};
+use near_workspaces::Contract;
 
 pub const SWEAT_CLAIM: &str = "sweat_claim";
 
 pub struct SweatClaim<'a> {
     contract: &'a Contract,
-    account: Option<Account>,
 }
 
 #[async_trait]
 impl InitApiIntegration for SweatClaim<'_> {
-    async fn init(&self, token_account_id: near_sdk::AccountId) -> Result<()> {
-        self.call_contract(
-            "init",
-            json!({
+    fn init(&self, token_account_id: near_sdk::AccountId) -> ContractCall<()> {
+        self.make_call("init")
+            .args_json(json!({
                 "token_account_id": token_account_id,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 }
 
 #[async_trait]
 impl ConfigApiIntegration for SweatClaim<'_> {
-    async fn set_claim_period(&mut self, period: Duration) -> Result<()> {
-        self.call_user(
-            "set_claim_period",
-            json!({
+    fn set_claim_period(&mut self, period: Duration) -> ContractCall<()> {
+        self.make_call("set_claim_period")
+            .args_json(json!({
                 "period": period,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 
-    async fn set_burn_period(&mut self, period: Duration) -> Result<()> {
-        self.call_user(
-            "set_burn_period",
-            json!({
+    fn set_burn_period(&mut self, period: Duration) -> ContractCall<()> {
+        self.make_call("set_burn_period")
+            .args_json(json!({
                 "period": period,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 }
 
 #[async_trait]
 impl AuthApiIntegration for SweatClaim<'_> {
-    async fn add_oracle(&mut self, account_id: AccountId) -> Result<()> {
-        self.call_contract(
-            "add_oracle",
-            json!({
+    fn add_oracle(&mut self, account_id: AccountId) -> ContractCall<()> {
+        self.make_call("add_oracle")
+            .args_json(json!({
                 "account_id": account_id,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 
-    async fn remove_oracle(&mut self, account_id: AccountId) -> Result<()> {
-        self.call_contract(
-            "remove_oracle",
-            json!({
+    fn remove_oracle(&mut self, account_id: AccountId) -> ContractCall<()> {
+        self.make_call("remove_oracle")
+            .args_json(json!({
                 "account_id": account_id,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 
-    async fn get_oracles(&self) -> Result<Vec<AccountId>> {
-        self.call_contract("get_oracles", ()).await
+    fn get_oracles(&self) -> ContractCall<Vec<AccountId>> {
+        self.make_call("get_oracles")
     }
 }
 
 #[async_trait]
 impl BurnApiIntegration for SweatClaim<'_> {
-    async fn burn(&mut self) -> Result<U128> {
-        self.call_user("burn", ()).await
+    fn burn(&mut self) -> ContractCall<U128> {
+        self.make_call("burn")
     }
 }
 
 #[async_trait]
 impl RecordApiIntegration for SweatClaim<'_> {
-    async fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) -> Result<()> {
-        self.call_contract(
-            "record_batch_for_hold",
-            json!({
+    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) -> ContractCall<()> {
+        self.make_call("record_batch_for_hold")
+            .args_json(json!({
                 "amounts": amounts,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 }
 
 #[async_trait]
 impl ClaimApiIntegration for SweatClaim<'_> {
-    async fn get_claimable_balance_for_account(&self, account_id: AccountId) -> Result<U128> {
-        self.call_contract(
-            "get_claimable_balance_for_account",
-            json!({
+    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> ContractCall<U128> {
+        self.make_call("get_claimable_balance_for_account")
+            .args_json(json!({
                 "account_id": account_id,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 
-    async fn is_claim_available(&self, account_id: AccountId) -> Result<ClaimAvailabilityView> {
-        self.call_contract(
-            "is_claim_available",
-            json!({
+    fn is_claim_available(&self, account_id: AccountId) -> ContractCall<ClaimAvailabilityView> {
+        self.make_call("is_claim_available")
+            .args_json(json!({
                 "account_id": account_id,
-            }),
-        )
-        .await
+            }))
+            .unwrap()
     }
 
-    async fn claim(&mut self) -> Result<ClaimResultView> {
-        self.call_user("claim", ()).await
+    fn claim(&mut self) -> ContractCall<ClaimResultView> {
+        self.make_call("claim")
     }
 }
 
 impl<'a> IntegrationContract<'a> for SweatClaim<'a> {
     fn with_contract(contract: &'a Contract) -> Self {
-        Self {
-            contract,
-            account: None,
-        }
-    }
-
-    fn with_user(mut self, account: &Account) -> Self {
-        self.account = account.clone().into();
-        self
-    }
-
-    fn user_account(&self) -> Account {
-        self.account
-            .as_ref()
-            .expect("Set account with `user` method first")
-            .clone()
+        Self { contract }
     }
 
     fn contract(&self) -> &'a Contract {

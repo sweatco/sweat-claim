@@ -6,8 +6,16 @@ edition = "2021"
 [lib]
 name = "model"
 
+[features]
+default = []
+integration-test = ["dep:integration-utils"]
+
+
 [dependencies]
 anyhow = { workspace = true }
 near-sdk = { workspace = true }
 async-trait = { workspace = true }
 integration-trait = { workspace = true }
+
+integration-utils = { workspace = true, optional = true }
+

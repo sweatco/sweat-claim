@@ -26,21 +26,23 @@ async fn happy_flow() -> anyhow::Result<()> {
     let manager = context.manager().await?;
 
     let alice_steps = 10_000;
-    let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
+    let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
 
-    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).await?.0;
+    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
     let target_fee = target_token_amount * 5 / 100;
     let target_effective_token_amount = target_token_amount - target_fee;
 
     context
         .ft_contract()
-        .with_user(&manager)
         .defer_batch(vec![(alice.to_near(), alice_steps)], context.sweat_claim().account())
+        .with_user(&manager)
+        .call()
         .await?;
 
     let claim_contract_balance = context
         .ft_contract()
         .ft_balance_of(context.sweat_claim().account())
+        .call()
         .await?;
 
     assert_eq!(claim_contract_balance.0, target_effective_token_amount);
@@ -48,22 +50,23 @@ async fn happy_flow() -> anyhow::Result<()> {
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(alice_deferred_balance.0, target_effective_token_amount);
 
-    let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).await?;
+    let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).call().await?;
     assert!(matches!(is_claim_available, ClaimAvailabilityView::Unavailable(_)));
 
     context
         .fast_forward_hours((CLAIM_PERIOD / (60 * 60) + 1) as u64)
         .await?;
 
-    let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).await?;
+    let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).call().await?;
     assert_eq!(is_claim_available, ClaimAvailabilityView::Available);
 
-    context.sweat_claim().with_user(&alice).claim().await?;
+    context.sweat_claim().claim().with_user(&alice).call().await?;
 
-    let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
+    let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
     assert_eq!(alice_balance_change, target_effective_token_amount);
 
@@ -79,34 +82,37 @@ async fn burn() -> anyhow::Result<()> {
 
     let alice_steps = 10_000;
 
-    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).await?.0;
+    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
     let target_fee = target_token_amount * 5 / 100;
     let target_effective_token_amount = target_token_amount - target_fee;
 
     context
         .ft_contract()
-        .with_user(&manager)
         .defer_batch(vec![(alice.to_near(), alice_steps)], context.sweat_claim().account())
+        .with_user(&manager)
+        .call()
         .await?;
 
     let claim_contract_balance = context
         .ft_contract()
         .ft_balance_of(context.sweat_claim().account())
+        .call()
         .await?;
 
     assert_eq!(claim_contract_balance.0, target_effective_token_amount);
 
-    let burn_result = context.sweat_claim().with_user(&manager).burn().await?;
+    let burn_result = context.sweat_claim().burn().with_user(&manager).call().await?;
     assert_eq!(0, burn_result.0);
 
     context.fast_forward_hours((BURN_PERIOD / (60 * 60) + 1) as u64).await?;
 
-    let burn_result = context.sweat_claim().with_user(&manager).burn().await?;
+    let burn_result = context.sweat_claim().burn().with_user(&manager).call().await?;
     assert_eq!(target_effective_token_amount, burn_result.0);
 
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(0, alice_deferred_balance.0);
 
@@ -130,14 +136,16 @@ async fn outdate() -> anyhow::Result<()> {
 
     context
         .ft_contract()
-        .with_user(&manager)
         .defer_batch(vec![(alice.to_near(), alice_steps)], context.sweat_claim().account())
+        .with_user(&manager)
+        .call()
         .await?;
     steps_since_tge += alice_steps as u64;
 
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
 
@@ -146,6 +154,7 @@ async fn outdate() -> anyhow::Result<()> {
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(0, alice_deferred_balance.0);
 
@@ -156,8 +165,9 @@ async fn outdate() -> anyhow::Result<()> {
 
     context
         .ft_contract()
-        .with_user(&manager)
         .defer_batch(vec![(alice.to_near(), alice_steps)], context.sweat_claim().account())
+        .with_user(&manager)
+        .call()
         .await?;
     steps_since_tge += alice_steps as u64;
 
@@ -170,13 +180,15 @@ async fn outdate() -> anyhow::Result<()> {
 
     context
         .ft_contract()
-        .with_user(&manager)
         .defer_batch(vec![(alice.to_near(), alice_steps)], context.sweat_claim().account())
+        .with_user(&manager)
+        .call()
         .await?;
 
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(
         target_effective_token_amount.0 + target_outdated_effective_token_amount.0,
@@ -188,6 +200,7 @@ async fn outdate() -> anyhow::Result<()> {
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
+        .call()
         .await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
 
