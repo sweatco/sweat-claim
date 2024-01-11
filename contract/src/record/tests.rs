@@ -35,6 +35,15 @@ fn record_by_oracle() {
 }
 
 #[test]
+#[should_panic(expected = "Unauthorized access! Only oracle can do this!")]
+fn record_by_not_oracle() {
+    let (_context, mut contract, accounts) = Context::init_with_oracle();
+
+    let alice_balance_1 = 1_000_000;
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance_1))]);
+}
+
+#[test]
 #[should_panic(expected = "Record for this timestamp: 0 already existed. It was overwritten.")]
 fn test_record() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();

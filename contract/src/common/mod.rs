@@ -25,7 +25,5 @@ fn convert_milliseconds_to_unix_timestamp_successfully() {
 #[should_panic(expected = "Failed to get convert milliseconds to Unix timestamp")]
 fn convert_milliseconds_to_unix_timestamp_with_unsuccessfully() {
     let millis: u64 = u64::MAX;
-    let timestamp = ms_timestamp_to_seconds(millis);
-
-    assert_eq!(1_699_038_575, timestamp);
+    let _timestamp = ms_timestamp_to_seconds(millis);
 }
