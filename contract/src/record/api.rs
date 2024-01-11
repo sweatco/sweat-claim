@@ -34,9 +34,8 @@ impl RecordApi for Contract {
                 record.accruals.push((now_seconds, index));
             } else {
                 let record = AccountRecord {
-                    last_claim_at: Some(now_seconds),
                     accruals: vec![(now_seconds, index)],
-                    ..Default::default()
+                    ..AccountRecord::new(now_seconds)
                 };
 
                 self.accounts.insert(account_id, record);
