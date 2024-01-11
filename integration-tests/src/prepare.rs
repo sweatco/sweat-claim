@@ -51,40 +51,54 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
     let manager = context.manager().await?;
     let alice = context.alice().await?;
 
-    context.ft_contract().new(".u.sweat.testnet".to_string().into()).await?;
-    context.sweat_claim().init(context.ft_contract().account()).await?;
+    context
+        .ft_contract()
+        .new(".u.sweat.testnet".to_string().into())
+        .call()
+        .await?;
+    context
+        .sweat_claim()
+        .init(context.ft_contract().account())
+        .call()
+        .await?;
 
-    context.ft_contract().add_oracle(&manager.to_near()).await?;
+    context.ft_contract().add_oracle(&manager.to_near()).call().await?;
 
     context
         .sweat_claim()
         .add_oracle(context.ft_contract().account())
+        .call()
         .await?;
-    context.sweat_claim().add_oracle(manager.to_near()).await?;
+    context.sweat_claim().add_oracle(manager.to_near()).call().await?;
 
     context
         .ft_contract()
         .storage_deposit(context.sweat_claim().contract().as_account().to_near().into(), None)
+        .call()
         .await?;
 
     context
         .ft_contract()
         .storage_deposit(alice.to_near().into(), None)
+        .call()
         .await?;
     context
         .ft_contract()
         .tge_mint(&alice.to_near(), U128(100_000_000))
+        .call()
         .await?;
 
     context
         .sweat_claim()
-        .with_user(&manager)
         .set_claim_period(CLAIM_PERIOD)
+        .with_user(&manager)
+        .call()
         .await?;
     context
         .sweat_claim()
-        .with_user(&manager)
         .set_burn_period(BURN_PERIOD)
+        .with_user(&manager)
+        .call()
         .await?;
 
     Ok(context)
