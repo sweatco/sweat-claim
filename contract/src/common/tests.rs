@@ -31,10 +31,6 @@ impl Context {
             .predecessor_account_id(accounts.owner.clone())
             .block_timestamp(0);
 
-        dbg!(&builder.context.current_account_id);
-        dbg!(&builder.context.signer_account_id);
-        dbg!(&builder.context.predecessor_account_id);
-
         testing_env!(builder.build());
 
         let contract = Contract::init(token_account);

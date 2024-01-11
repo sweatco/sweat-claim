@@ -1716,7 +1716,6 @@ dependencies = [
  "dotenv",
  "fake",
  "futures",
- "itertools 0.11.0",
  "near-sdk",
  "near-units",
  "near-workspaces",
@@ -1943,8 +1942,8 @@ dependencies = [
  "anyhow",
  "async-trait",
  "integration-trait",
+ "integration-utils",
  "near-sdk",
- "serde",
 ]
 
 [[package]]
@@ -3779,7 +3778,7 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "sweat-integration"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=7ad72657efdd3c891e8cb3ae34050fc57bab01e6#7ad72657efdd3c891e8cb3ae34050fc57bab01e6"
+source = "git+https://github.com/sweatco/sweat-near?rev=1c3e9b4bdcb1cd04a024637c8f3db398ce171796#1c3e9b4bdcb1cd04a024637c8f3db398ce171796"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3794,7 +3793,7 @@ dependencies = [
 [[package]]
 name = "sweat-model"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=7ad72657efdd3c891e8cb3ae34050fc57bab01e6#7ad72657efdd3c891e8cb3ae34050fc57bab01e6"
+source = "git+https://github.com/sweatco/sweat-near?rev=1c3e9b4bdcb1cd04a024637c8f3db398ce171796#1c3e9b4bdcb1cd04a024637c8f3db398ce171796"
 dependencies = [
  "anyhow",
  "async-trait",
