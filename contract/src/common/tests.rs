@@ -24,6 +24,7 @@ impl Context {
         let token_account = accounts.token.clone();
 
         let mut builder = VMContextBuilder::new();
+
         builder
             .current_account_id(accounts.owner.clone())
             .signer_account_id(accounts.owner.clone())
@@ -55,6 +56,7 @@ impl Context {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct TestAccounts {
     pub alice: AccountId,
     pub bob: AccountId,

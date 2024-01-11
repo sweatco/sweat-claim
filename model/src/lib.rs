@@ -21,6 +21,7 @@ pub enum ClaimAvailabilityView {
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
 pub struct ClaimResultView {
     pub total: U128,
 }

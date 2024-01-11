@@ -6,18 +6,18 @@ default-members = ["contract"]
 members = ["contract", "integration-tests", "model"]
 
 [workspace.dependencies]
-fake = "2.8.0"
+fake = "2.9.2"
 rand = "0.8.5"
-anyhow = "1.0.75"
-async-trait = "0.1.74"
+anyhow = "1.0.79"
+async-trait = "0.1.77"
 tokio = "1.28"
 
-integration-trait = { git = "https://github.com/sweatco/integration-trait.git", rev = "83a69f7ba4acab9405bf935f7dfc70f2f5279c40" }
-integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "0b3c2faf0db31cdb3481be4d35dbb48b62a98618" }
+integration-trait = { git = "https://github.com/sweatco/integration-utils.git", rev = "b3e5b747b930ebc04601146deda13f12615d5e01" }
+integration-utils = { git = "https://github.com/sweatco/integration-utils.git", rev = "b3e5b747b930ebc04601146deda13f12615d5e01" }
 
 model = { path = "model" }
-sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "82b5acf1c743d38191b996dc8eff3ac289e467d6" }
-sweat-integration = { git = "https://github.com/sweatco/sweat-near", rev = "82b5acf1c743d38191b996dc8eff3ac289e467d6" }
+sweat-model = { git = "https://github.com/sweatco/sweat-near", rev = "1c3e9b4bdcb1cd04a024637c8f3db398ce171796" }
+sweat-integration = { git = "https://github.com/sweatco/sweat-near", rev = "1c3e9b4bdcb1cd04a024637c8f3db398ce171796" }
 
 near-workspaces = "0.9.0"
 near-sdk = { git = "https://github.com/sweatco/near-sdk-rs", rev = "8c48b26cc48d969c1e5f3162141fe9c824fccecd" }
