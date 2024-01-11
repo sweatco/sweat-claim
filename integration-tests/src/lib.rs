@@ -6,7 +6,7 @@ use model::{
     ClaimAvailabilityView,
 };
 use near_sdk::{json_types::U64, serde_json::json};
-use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration};
+use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
     common::PanicFinder,
