@@ -50,6 +50,21 @@ pub struct Contract {
     ///
     /// `accruals` does not contain account IDs directly but correlates with `AccountRecord`
     /// entries in the `accounts` field. It is essential for tracking token accruals over time.
+    /// `AccountRecord` entries in `accounts` map contain pairs of a timestamp pointing to exact
+    /// entry in `accruals` and index of particular accrual in corresponding vector.
+    ///
+    /// Here is an illustration of the connection:
+    /// ```text
+    ///        Contract.accruals:
+    ///        ...
+    ///        1705066289: ([0.1, 2.3, 5.3, 2.0, 4.3], 14)
+    ///  ┌───> 1705066501: ([1.2, 3.4, 8.7, 9.6], 22.9)
+    ///  │     ...                      ↑
+    ///  │                              │
+    ///  │     AccountRecord.accruals:  │
+    ///  │     [(1705066501, 2)]        │
+    ///  └────────────┘      └──────────┘
+    /// ```
     accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
 
     /// A map containing accrual and service details for each user account.
