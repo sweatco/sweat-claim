@@ -17,6 +17,19 @@ pub struct AccountRecord {
     /// `accruals` contains pairs of timestamps and indices that link to specific accrual
     /// records in the contract's accruals ledger. These references are used to calculate
     /// and verify the user's accrued token amount.
+    ///
+    /// Here is an illustration of the connection:
+    /// ```text
+    ///        Contract.accruals:
+    ///        ...
+    ///        1705066289: ([0.1, 2.3, 5.3, 2.0, 4.3], 14)
+    ///  ┌───> 1705066501: ([1.2, 3.4, 8.7, 9.6], 22.9)
+    ///  │     ...                      ↑
+    ///  │                              │
+    ///  │     AccountRecord.accruals:  │
+    ///  │     [(1705066501, 2)]        │
+    ///  └────────────┘      └──────────┘
+    /// ```
     pub accruals: Vec<(UnixTimestamp, AccrualIndex)>,
 
     /// Indicates whether the user is authorized to use the contract's features.
