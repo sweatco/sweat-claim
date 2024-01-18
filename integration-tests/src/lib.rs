@@ -16,6 +16,7 @@ use crate::{
 
 mod common;
 mod interface;
+mod measure;
 mod prepare;
 
 #[tokio::test]
