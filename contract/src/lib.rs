@@ -1,4 +1,4 @@
-use model::{account_record::AccountRecord, api::InitApi, Duration, TokenSymbol, TokensAmount, UnixTimestamp};
+use model::{account_record::AccountRecord, api::InitApi, AssetAbbreviation, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
@@ -21,7 +21,7 @@ const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    token_account_ids: LookupMap<TokenSymbol, AccountId>,
+    token_account_ids: LookupMap<AssetAbbreviation, AccountId>,
 
     /// A set of account IDs authorized to perform sensitive operations within the contract.
     ///
@@ -61,7 +61,7 @@ pub struct Contract {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount, TokenSymbol)>,
+    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount, AssetAbbreviation)>,
 
     /// A map containing accrual and service details for each user account.
     ///
@@ -77,7 +77,7 @@ pub struct Contract {
     /// token transactions and operations within the contract.
     is_service_call_running: bool,
 
-    default_token_symbol: TokenSymbol,
+    default_asset: AssetAbbreviation,
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -92,7 +92,7 @@ enum StorageKey {
 #[near_bindgen]
 impl InitApi for Contract {
     #[init]
-    fn init(default_token: (TokenSymbol, AccountId)) -> Self {
+    fn init(default_token: (AssetAbbreviation, AccountId)) -> Self {
         Self::assert_private();
 
         let mut token_account_ids = LookupMap::new(StorageKey::TokenAccounts);
@@ -110,14 +110,14 @@ impl InitApi for Contract {
 
             is_service_call_running: false,
 
-            default_token_symbol: default_token.0,
+            default_asset: default_token.0,
         }
     }
 }
 
 #[near_bindgen]
 impl Contract {
-    pub fn register_token(&mut self, symbol: TokenSymbol, account_id: AccountId) {
+    pub fn register_token(&mut self, symbol: AssetAbbreviation, account_id: AccountId) {
         self.token_account_ids.insert(symbol, account_id);
     }
 }

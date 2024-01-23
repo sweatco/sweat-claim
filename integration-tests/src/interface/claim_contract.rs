@@ -5,7 +5,7 @@ use model::{
         AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ConfigApiIntegration, InitApiIntegration,
         RecordApiIntegration,
     },
-    ClaimAvailabilityView, ClaimResultView, Duration, TokenSymbol,
+    AssetAbbreviation, ClaimAvailabilityView, ClaimResultView, Duration,
 };
 use near_sdk::{json_types::U128, serde_json::json, AccountId};
 use near_workspaces::Contract;
@@ -18,7 +18,7 @@ pub struct SweatClaim<'a> {
 
 #[async_trait]
 impl InitApiIntegration for SweatClaim<'_> {
-    fn init(&self, default_token: (TokenSymbol, AccountId)) -> ContractCall<()> {
+    fn init(&self, default_token: (AssetAbbreviation, AccountId)) -> ContractCall<()> {
         self.make_call("init")
             .args_json(json!({
                 "default_token": default_token,
@@ -81,12 +81,12 @@ impl RecordApiIntegration for SweatClaim<'_> {
     fn record_batch_for_hold(
         &mut self,
         amounts: Vec<(AccountId, U128)>,
-        token_symbol: Option<TokenSymbol>,
+        asset: Option<AssetAbbreviation>,
     ) -> ContractCall<()> {
         self.make_call("record_batch_for_hold")
             .args_json(json!({
                 "amounts": amounts,
-                "token_symbol": token_symbol,
+                "asset": asset,
             }))
             .unwrap()
     }
@@ -97,12 +97,12 @@ impl ClaimApiIntegration for SweatClaim<'_> {
     fn get_claimable_balance_for_account(
         &self,
         account_id: AccountId,
-        token_symbol: Option<TokenSymbol>,
+        asset: Option<AssetAbbreviation>,
     ) -> ContractCall<U128> {
         self.make_call("get_claimable_balance_for_account")
             .args_json(json!({
                 "account_id": account_id,
-                "token_symbol": token_symbol,
+                "asset": asset,
             }))
             .unwrap()
     }
@@ -115,10 +115,10 @@ impl ClaimApiIntegration for SweatClaim<'_> {
             .unwrap()
     }
 
-    fn claim(&mut self, token_symbol: Option<TokenSymbol>) -> ContractCall<ClaimResultView> {
+    fn claim(&mut self, asset: Option<AssetAbbreviation>) -> ContractCall<ClaimResultView> {
         self.make_call("claim")
             .args_json(json!({
-                "token_symbol": token_symbol,
+                "asset": asset,
             }))
             .unwrap()
     }

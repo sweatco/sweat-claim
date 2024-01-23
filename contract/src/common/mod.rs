@@ -1,4 +1,4 @@
-use model::{TokenSymbol, UnixTimestamp};
+use model::{AssetAbbreviation, UnixTimestamp};
 use near_sdk::{
     env::{block_timestamp_ms, panic_str},
     AccountId,
@@ -19,10 +19,10 @@ pub(crate) fn now_seconds() -> UnixTimestamp {
 }
 
 impl Contract {
-    pub(crate) fn get_token_account_id(&self, token_symbol: &TokenSymbol) -> AccountId {
+    pub(crate) fn get_token_account_id(&self, asset: &AssetAbbreviation) -> AccountId {
         self.token_account_ids
-            .get(token_symbol.as_str())
-            .unwrap_or_else(|| panic_str(&format!("Token {token_symbol} is not registered")))
+            .get(asset.as_str())
+            .unwrap_or_else(|| panic_str(&format!("Token {asset} is not registered")))
             .clone()
     }
 }
