@@ -50,6 +50,7 @@ pub struct CleanData {
 #[serde(crate = "near_sdk::serde")]
 pub struct RecordData {
     pub timestamp: UnixTimestamp,
+    pub token: TokenSymbol,
     pub amounts: Vec<(AccountId, U128)>,
 }
 

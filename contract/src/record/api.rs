@@ -21,6 +21,7 @@ impl RecordApi for Contract {
 
         let mut event_data = RecordData {
             timestamp: now_seconds,
+            token: token_symbol.clone(),
             amounts: vec![],
         };
 
