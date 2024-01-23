@@ -56,6 +56,8 @@ impl ClaimApi for Contract {
         );
 
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
+        require!(!account_data.is_locked, "Another operation is running");
+
         account_data.is_locked = true;
 
         let now = now_seconds();
