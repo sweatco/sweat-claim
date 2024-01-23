@@ -11,6 +11,7 @@ pub type UnixTimestamp = u32;
 pub type AccrualIndex = u32;
 pub type TokensAmount = u128;
 pub type Duration = u32; // Period in seconds
+pub type TokenSymbol = String;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]
@@ -25,6 +26,10 @@ pub enum ClaimAvailabilityView {
 pub struct ClaimResultView {
     pub total: U128,
 }
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ClaimAllResultView(pub Vec<ClaimResultView>);
 
 impl ClaimResultView {
     pub fn new(total: u128) -> Self {

@@ -58,7 +58,7 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
         .await?;
     context
         .sweat_claim()
-        .init(context.ft_contract().account())
+        .init(("SWEAT".to_string(), context.ft_contract().account()))
         .call()
         .await?;
 

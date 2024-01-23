@@ -33,7 +33,7 @@ impl Context {
 
         testing_env!(builder.build());
 
-        let contract = Contract::init(token_account);
+        let contract = Contract::init(("SWEAT".to_string(), token_account));
         let context = Context { builder };
 
         (context, contract, accounts)

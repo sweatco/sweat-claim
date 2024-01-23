@@ -1,7 +1,7 @@
 use integration_trait::make_integration_version;
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
-use crate::{ClaimAvailabilityView, ClaimResultView, Duration};
+use crate::{ClaimAvailabilityView, ClaimResultView, Duration, TokenSymbol};
 
 /// An API for initializing smart contracts in the context of fungible token operations.
 ///
@@ -22,7 +22,7 @@ pub trait InitApi {
     /// # Returns
     ///
     /// Returns an instance of the implementing type.
-    fn init(token_account_id: AccountId) -> Self;
+    fn init(default_token: (TokenSymbol, AccountId)) -> Self;
 }
 
 /// An API for configuring various parameters of the smart contract during its lifetime.
@@ -147,7 +147,7 @@ pub trait RecordApi {
     /// # Panics
     ///
     /// Panics if called by any account other than an oracle.
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>);
+    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, token_symbol: Option<TokenSymbol>);
 }
 
 /// An API for managing the claiming process of accrued tokens in the smart contract.
@@ -166,7 +166,7 @@ pub trait ClaimApi {
     ///
     /// Returns a `U128` value indicating the amount of claimable tokens for the provided
     /// `account_id`.
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128;
+    fn get_claimable_balance_for_account(&self, account_id: AccountId, token_symbol: Option<TokenSymbol>) -> U128;
 
     /// Checks if the claim is available for a specified account.
     ///
@@ -199,5 +199,5 @@ pub trait ClaimApi {
     ///
     /// Panics if the claim is unavailable at the moment of calling. Users should ensure that
     /// their claim is available using the `is_claim_available` method prior to calling this.
-    fn claim(&mut self) -> PromiseOrValue<ClaimResultView>;
+    fn claim(&mut self, token_symbol: Option<TokenSymbol>) -> PromiseOrValue<ClaimResultView>;
 }

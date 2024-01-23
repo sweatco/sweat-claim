@@ -1,5 +1,10 @@
-use model::UnixTimestamp;
-use near_sdk::env::{block_timestamp_ms, panic_str};
+use model::{TokenSymbol, UnixTimestamp};
+use near_sdk::{
+    env::{block_timestamp_ms, panic_str},
+    AccountId,
+};
+
+use crate::Contract;
 
 mod asserts;
 pub(crate) mod tests;
@@ -11,6 +16,15 @@ fn ms_timestamp_to_seconds(ms: u64) -> UnixTimestamp {
 
 pub(crate) fn now_seconds() -> UnixTimestamp {
     ms_timestamp_to_seconds(block_timestamp_ms())
+}
+
+impl Contract {
+    pub(crate) fn get_token_account_id(&self, token_symbol: &TokenSymbol) -> AccountId {
+        self.token_account_ids
+            .get(token_symbol.as_str())
+            .unwrap_or_else(|| panic_str(&format!("Token {token_symbol} is not registered")))
+            .clone()
+    }
 }
 
 #[test]

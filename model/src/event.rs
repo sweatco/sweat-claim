@@ -6,7 +6,7 @@ use near_sdk::{
     serde_json, AccountId,
 };
 
-use crate::UnixTimestamp;
+use crate::{TokenSymbol, UnixTimestamp};
 
 pub const PACKAGE_NAME: &str = "sweat_claim";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -35,6 +35,7 @@ pub struct BurnData {
 #[serde(crate = "near_sdk::serde")]
 pub struct ClaimData {
     pub account_id: AccountId,
+    pub token_symbol: TokenSymbol,
     pub details: Vec<(UnixTimestamp, U128)>,
     pub total_claimed: U128,
 }

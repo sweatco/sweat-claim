@@ -5,7 +5,7 @@ use model::{
         AuthApiIntegration, BurnApiIntegration, ClaimApiIntegration, ConfigApiIntegration, InitApiIntegration,
         RecordApiIntegration,
     },
-    ClaimAvailabilityView, ClaimResultView, Duration,
+    ClaimAvailabilityView, ClaimResultView, Duration, TokenSymbol,
 };
 use near_sdk::{json_types::U128, serde_json::json, AccountId};
 use near_workspaces::Contract;
@@ -18,10 +18,10 @@ pub struct SweatClaim<'a> {
 
 #[async_trait]
 impl InitApiIntegration for SweatClaim<'_> {
-    fn init(&self, token_account_id: near_sdk::AccountId) -> ContractCall<()> {
+    fn init(&self, default_token: (TokenSymbol, AccountId)) -> ContractCall<()> {
         self.make_call("init")
             .args_json(json!({
-                "token_account_id": token_account_id,
+                "default_token": default_token,
             }))
             .unwrap()
     }
@@ -78,10 +78,15 @@ impl BurnApiIntegration for SweatClaim<'_> {
 
 #[async_trait]
 impl RecordApiIntegration for SweatClaim<'_> {
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) -> ContractCall<()> {
+    fn record_batch_for_hold(
+        &mut self,
+        amounts: Vec<(AccountId, U128)>,
+        token_symbol: Option<TokenSymbol>,
+    ) -> ContractCall<()> {
         self.make_call("record_batch_for_hold")
             .args_json(json!({
                 "amounts": amounts,
+                "token_symbol": token_symbol,
             }))
             .unwrap()
     }
@@ -89,10 +94,15 @@ impl RecordApiIntegration for SweatClaim<'_> {
 
 #[async_trait]
 impl ClaimApiIntegration for SweatClaim<'_> {
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> ContractCall<U128> {
+    fn get_claimable_balance_for_account(
+        &self,
+        account_id: AccountId,
+        token_symbol: Option<TokenSymbol>,
+    ) -> ContractCall<U128> {
         self.make_call("get_claimable_balance_for_account")
             .args_json(json!({
                 "account_id": account_id,
+                "token_symbol": token_symbol,
             }))
             .unwrap()
     }
@@ -105,8 +115,12 @@ impl ClaimApiIntegration for SweatClaim<'_> {
             .unwrap()
     }
 
-    fn claim(&mut self) -> ContractCall<ClaimResultView> {
+    fn claim(&mut self, token_symbol: Option<TokenSymbol>) -> ContractCall<ClaimResultView> {
         self.make_call("claim")
+            .args_json(json!({
+                "token_symbol": token_symbol,
+            }))
+            .unwrap()
     }
 }
 

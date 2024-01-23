@@ -1,7 +1,7 @@
 use model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
+    ClaimAvailabilityView, ClaimResultView, TokenSymbol, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
@@ -9,7 +9,9 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 
 #[near_bindgen]
 impl ClaimApi for Contract {
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
+    fn get_claimable_balance_for_account(&self, account_id: AccountId, token_symbol: Option<TokenSymbol>) -> U128 {
+        let target_token_symbol = token_symbol.unwrap_or_else(|| self.default_token_symbol.clone());
+
         let Some(account_data) = self.accounts.get(&account_id) else {
             return U128(0);
         };
@@ -22,9 +24,13 @@ impl ClaimApi for Contract {
                 continue;
             }
 
-            let Some((accruals, _)) = self.accruals.get(datetime) else {
+            let Some((accruals, _, token_symbol)) = self.accruals.get(datetime) else {
                 continue;
             };
+
+            if *token_symbol != target_token_symbol {
+                continue;
+            }
 
             if let Some(amount) = accruals.get(*index) {
                 total_accrual += *amount;
@@ -47,13 +53,15 @@ impl ClaimApi for Contract {
         }
     }
 
-    fn claim(&mut self) -> PromiseOrValue<ClaimResultView> {
+    fn claim(&mut self, token_symbol: Option<TokenSymbol>) -> PromiseOrValue<ClaimResultView> {
         let account_id = env::predecessor_account_id();
 
         require!(
             self.is_claim_available(account_id.clone()) == ClaimAvailabilityView::Available,
             "Claim is not available at the moment"
         );
+
+        let target_token_symbol = token_symbol.unwrap_or_else(|| self.default_token_symbol.clone());
 
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
         account_data.is_locked = true;
@@ -67,9 +75,13 @@ impl ClaimApi for Contract {
                 continue;
             }
 
-            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
+            let Some((accruals, total, token_symbol)) = self.accruals.get_mut(datetime) else {
                 continue;
             };
+
+            if *token_symbol != target_token_symbol {
+                continue;
+            }
 
             let Some(amount) = accruals.get_mut(*index) else {
                 continue;
@@ -85,7 +97,7 @@ impl ClaimApi for Contract {
         account_data.accruals.clear();
 
         if total_accrual > 0 {
-            self.transfer_external(now, account_id, total_accrual, details)
+            self.transfer_external(now, account_id, total_accrual, target_token_symbol, details)
         } else {
             account_data.is_locked = false;
             PromiseOrValue::Value(ClaimResultView::new(0))
@@ -99,6 +111,7 @@ impl Contract {
         now: UnixTimestamp,
         account_id: AccountId,
         total_accrual: TokensAmount,
+        token_symbol: TokenSymbol,
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
     ) -> ClaimResultView {
@@ -110,6 +123,7 @@ impl Contract {
 
             let event_data = ClaimData {
                 account_id,
+                token_symbol,
                 details: details
                     .iter()
                     .map(|(timestamp, amount)| (*timestamp, U128(*amount)))
@@ -125,7 +139,7 @@ impl Contract {
             let daily_accruals = self
                 .accruals
                 .entry(timestamp)
-                .or_insert_with(|| (Vector::new(AccrualsEntry(timestamp)), 0));
+                .or_insert_with(|| (Vector::new(AccrualsEntry(timestamp)), 0, token_symbol.clone()));
 
             daily_accruals.0.push(amount);
             daily_accruals.1 += amount;
@@ -139,7 +153,7 @@ impl Contract {
 
 #[cfg(not(test))]
 mod prod {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use model::{ClaimResultView, TokenSymbol, TokensAmount, UnixTimestamp};
     use near_sdk::{
         env, ext_contract, is_promise_success, near_bindgen, serde_json::json, AccountId, Gas, Promise, PromiseOrValue,
     };
@@ -153,6 +167,7 @@ mod prod {
             now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
+            token_symbol: TokenSymbol,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> ClaimResultView;
     }
@@ -165,9 +180,17 @@ mod prod {
             now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
+            token_symbol: TokenSymbol,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> ClaimResultView {
-            self.on_transfer_internal(now, account_id, total_accrual, details, is_promise_success())
+            self.on_transfer_internal(
+                now,
+                account_id,
+                total_accrual,
+                token_symbol,
+                details,
+                is_promise_success(),
+            )
         }
     }
 
@@ -177,6 +200,7 @@ mod prod {
             now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
+            token_symbol: TokenSymbol,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> PromiseOrValue<ClaimResultView> {
             let args = json!({
@@ -188,12 +212,13 @@ mod prod {
             .as_bytes()
             .to_vec();
 
-            Promise::new(self.token_account_id.clone())
+            let token_account_id = self.get_token_account_id(&token_symbol);
+            Promise::new(token_account_id)
                 .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
                 .then(
                     ext_self::ext(env::current_account_id())
                         .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
-                        .on_transfer(now, account_id, total_accrual, details),
+                        .on_transfer(now, account_id, total_accrual, token_symbol, details),
                 )
                 .into()
         }
@@ -202,7 +227,7 @@ mod prod {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use model::{ClaimResultView, TokenSymbol, TokensAmount, UnixTimestamp};
     use near_sdk::{AccountId, PromiseOrValue};
 
     use crate::{common::tests::data::get_test_future_success, Contract};
@@ -215,12 +240,14 @@ pub(crate) mod test {
             now: UnixTimestamp,
             account_id: AccountId,
             total_accrual: TokensAmount,
+            token_symbol: TokenSymbol,
             details: Vec<(UnixTimestamp, TokensAmount)>,
         ) -> PromiseOrValue<ClaimResultView> {
             PromiseOrValue::Value(self.on_transfer_internal(
                 now,
                 account_id,
                 total_accrual,
+                token_symbol,
                 details,
                 get_test_future_success(EXT_TRANSFER_FUTURE),
             ))
