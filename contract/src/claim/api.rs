@@ -1,7 +1,7 @@
 use model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    AssetAbbreviation, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
+    AssetAbbreviation, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
@@ -14,7 +14,7 @@ impl ClaimApi for Contract {
         account_id: AccountId,
         default_asset: Option<AssetAbbreviation>,
     ) -> U128 {
-        let target_default_asset = default_asset.unwrap_or_else(|| self.default_asset.clone());
+        let target_asset = default_asset.unwrap_or_else(|| self.default_asset.clone());
 
         let Some(account_data) = self.accounts.get(&account_id) else {
             return U128(0);
@@ -28,11 +28,11 @@ impl ClaimApi for Contract {
                 continue;
             }
 
-            let Some((accruals, _, default_asset)) = self.accruals.get(datetime) else {
+            let Some((accruals, _, asset)) = self.accruals.get(datetime) else {
                 continue;
             };
 
-            if *default_asset != target_default_asset {
+            if *asset != target_asset {
                 continue;
             }
 
@@ -65,7 +65,7 @@ impl ClaimApi for Contract {
             "Claim is not available at the moment"
         );
 
-        let target_default_asset = asset.unwrap_or_else(|| self.default_asset.clone());
+        let target_asset = asset.unwrap_or_else(|| self.default_asset.clone());
 
         let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
         account_data.is_locked = true;
@@ -74,21 +74,21 @@ impl ClaimApi for Contract {
         let mut total_accrual = 0;
         let mut details = vec![];
 
-        for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
-                continue;
+        account_data.accruals.retain_mut(|(datetime, index)| {
+            if now - *datetime > self.burn_period {
+                return false;
             }
 
-            let Some((accruals, total, default_asset)) = self.accruals.get_mut(datetime) else {
-                continue;
+            let Some((accruals, total, asset)) = self.accruals.get_mut(datetime) else {
+                return false;
             };
 
-            if *default_asset != target_default_asset {
-                continue;
+            if *asset != target_asset {
+                return true;
             }
 
             let Some(amount) = accruals.get_mut(*index) else {
-                continue;
+                return false;
             };
 
             details.push((*datetime, *amount));
@@ -96,16 +96,20 @@ impl ClaimApi for Contract {
             total_accrual += *amount;
             *total -= *amount;
             *amount = 0;
-        }
 
-        account_data.accruals.clear();
+            false
+        });
 
         if total_accrual > 0 {
-            self.transfer_external(now, account_id, total_accrual, target_default_asset, details)
+            self.transfer_external(now, account_id, total_accrual, target_asset, details)
         } else {
             account_data.is_locked = false;
             PromiseOrValue::Value(ClaimResultView::new(0))
         }
+    }
+
+    fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
+        todo!()
     }
 }
 

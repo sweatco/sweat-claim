@@ -1,4 +1,9 @@
+use model::TokensAmount;
 use near_workspaces::result::{ExecutionFailure, ExecutionResult, ExecutionSuccess};
+
+pub(crate) fn calculate_fee(amount: TokensAmount) -> TokensAmount {
+    (amount * 5).div_ceil(100)
+}
 
 pub(crate) trait PanicFinder {
     fn has_panic(&self, message: &str) -> bool;

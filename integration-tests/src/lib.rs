@@ -9,7 +9,7 @@ use near_sdk::{json_types::U64, serde_json::json};
 use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
-    common::PanicFinder,
+    common::{calculate_fee, PanicFinder},
     interface::common::ContractAccount,
     prepare::{prepare_contract, IntegrationContext, BURN_PERIOD, CLAIM_PERIOD},
 };
@@ -29,7 +29,7 @@ async fn happy_flow() -> anyhow::Result<()> {
     let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
 
     let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
-    let target_fee = target_token_amount * 5 / 100;
+    let target_fee = calculate_fee(target_token_amount);
     let target_effective_token_amount = target_token_amount - target_fee;
 
     context
@@ -83,7 +83,7 @@ async fn burn() -> anyhow::Result<()> {
     let alice_steps = 10_000;
 
     let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
-    let target_fee = target_token_amount * 5 / 100;
+    let target_fee = calculate_fee(target_token_amount);
     let target_effective_token_amount = target_token_amount - target_fee;
 
     context
