@@ -27,12 +27,12 @@ pub struct ClaimResultView {
     pub total: U128,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-#[serde(crate = "near_sdk::serde")]
-pub struct ClaimAllResultView(pub Vec<ClaimResultView>);
-
 impl ClaimResultView {
     pub fn new(total: u128) -> Self {
         Self { total: U128(total) }
     }
 }
+
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ClaimAllResultView(pub Vec<ClaimResultView>);
