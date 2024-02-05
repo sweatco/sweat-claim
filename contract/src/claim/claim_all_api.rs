@@ -16,7 +16,7 @@ type AssetClaim = (AssetAbbreviation, AssetDetails);
 
 #[near_bindgen]
 impl Contract {
-    fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
+    pub fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
         let account_id = env::predecessor_account_id();
 
         require!(
