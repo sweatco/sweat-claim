@@ -35,4 +35,4 @@ impl ClaimResultView {
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
-pub struct ClaimAllResultView(pub Vec<ClaimResultView>);
+pub struct ClaimAllResultView(pub Vec<(AssetAbbreviation, bool, Option<ClaimResultView>)>);

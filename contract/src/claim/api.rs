@@ -6,20 +6,18 @@ use model::{
     AssetAbbreviation, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{
-    env, env::log_str, json_types::U128, near_bindgen, require, serde_json::json, store::Vector, AccountId, Gas,
-    Promise, PromiseOrValue,
+    env, env::log_str, ext_contract, json_types::U128, near_bindgen, require, serde_json::json, store::Vector,
+    AccountId, Gas, Promise, PromiseOrValue,
 };
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
 
+pub type AssetDetails = (Vec<(UnixTimestamp, TokensAmount)>, TokensAmount);
+
 #[near_bindgen]
 impl ClaimApi for Contract {
-    fn get_claimable_balance_for_account(
-        &self,
-        account_id: AccountId,
-        default_asset: Option<AssetAbbreviation>,
-    ) -> U128 {
-        let target_asset = default_asset.unwrap_or_else(|| self.default_asset.clone());
+    fn get_claimable_balance_for_account(&self, account_id: AccountId, asset: Option<AssetAbbreviation>) -> U128 {
+        let target_asset = asset.unwrap_or_else(|| self.default_asset.clone());
 
         let Some(account_data) = self.accounts.get(&account_id) else {
             return U128(0);
@@ -112,85 +110,6 @@ impl ClaimApi for Contract {
             PromiseOrValue::Value(ClaimResultView::new(0))
         }
     }
-
-    fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
-        let account_id = env::predecessor_account_id();
-
-        require!(
-            self.is_claim_available(account_id.clone()) == ClaimAvailabilityView::Available,
-            "Claim is not available at the moment"
-        );
-
-        let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
-
-        let now = now_seconds();
-        let mut details: HashMap<AssetAbbreviation, TokensAmount> = HashMap::new();
-
-        for (datetime, index) in &account_data.accruals {
-            if now - *datetime > self.burn_period {
-                continue;
-            }
-
-            let Some((accruals, total, asset)) = self.accruals.get_mut(datetime) else {
-                continue;
-            };
-
-            let Some(amount) = accruals.get_mut(*index) else {
-                continue;
-            };
-
-            if !details.contains_key(asset) {
-                details.insert(asset.clone(), 0);
-            }
-
-            log_str(format!("Add {amount:?} for {asset}").as_str());
-
-            *details.get_mut(asset).unwrap() += *amount;
-            *total -= *amount;
-            *amount = 0;
-        }
-
-        account_data.accruals.clear();
-
-        if details.is_empty() {
-            PromiseOrValue::Value(ClaimAllResultView::default())
-        } else {
-            let mut promise: Option<Promise> = None;
-            for asset in details.keys() {
-                let contract_id = self.get_token_account_id(asset);
-                let amount = details.get(asset).unwrap();
-
-                log_str(format!("--> Handle {amount:?} for {asset}").as_str());
-
-                if let Some(aggregated_promise) = promise {
-                    log_str("Append promise");
-                    promise = Some(aggregated_promise.then(create_transfer_promise(
-                        contract_id,
-                        account_id.clone(),
-                        U128(*amount),
-                    )));
-                } else {
-                    log_str("Create new promise");
-                    promise = Some(create_transfer_promise(contract_id, account_id.clone(), U128(*amount)));
-                }
-            }
-
-            promise.unwrap().into()
-        }
-    }
-}
-
-fn create_transfer_promise(contract_id: AccountId, receiver_id: AccountId, amount: U128) -> Promise {
-    let args = json!({
-        "receiver_id": receiver_id,
-        "amount": amount,
-        "memo": "",
-    })
-    .to_string()
-    .as_bytes()
-    .to_vec();
-
-    Promise::new(contract_id).function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
 }
 
 impl Contract {

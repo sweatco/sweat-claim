@@ -200,6 +200,4 @@ pub trait ClaimApi {
     /// Panics if the claim is unavailable at the moment of calling. Users should ensure that
     /// their claim is available using the `is_claim_available` method prior to calling this.
     fn claim(&mut self, asset: Option<AssetAbbreviation>) -> PromiseOrValue<ClaimResultView>;
-
-    fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView>;
 }
