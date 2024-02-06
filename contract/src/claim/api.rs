@@ -174,7 +174,7 @@ impl Contract {
             account.accruals.push((timestamp, daily_accruals.0.len() - 1));
         }
 
-        ClaimResultView::new(asset, false, None)
+        ClaimResultView::new(asset, false, Some(0))
     }
 }
 
