@@ -2,7 +2,7 @@ use model::{
     account_record::AccountRecord,
     api::RecordApi,
     event::{emit, EventKind, RecordData},
-    AssetAbbreviation,
+    Asset,
 };
 use near_sdk::{json_types::U128, near_bindgen, require, store::Vector, AccountId};
 
@@ -10,7 +10,7 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 
 #[near_bindgen]
 impl RecordApi for Contract {
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<AssetAbbreviation>) {
+    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<Asset>) {
         self.assert_oracle();
 
         let asset = asset.unwrap_or("SWEAT".to_string());

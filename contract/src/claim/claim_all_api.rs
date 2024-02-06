@@ -6,13 +6,18 @@ use model::{
     ClaimAllResultView, ClaimAvailabilityView, ClaimResultView,
 };
 use near_sdk::{
-    env, env::log_str, ext_contract, is_promise_success, json_types::U128, require, serde_json::json, Gas, Promise,
-    PromiseOrValue,
+    env, env::log_str, ext_contract, json_types::U128, require, serde_json::json, Gas, Promise, PromiseOrValue,
 };
 
-use crate::{claim::api::AssetDetails, common::now_seconds, Contract, StorageKey::AccrualsEntry, *};
+use crate::{
+    claim::api::{Claim, ClaimDetails},
+    common::{is_promise_success, now_seconds},
+    Contract,
+    StorageKey::AccrualsEntry,
+    *,
+};
 
-type AssetClaim = (AssetAbbreviation, AssetDetails);
+const EXT_TRANSFER_ALL_FUTURE: &str = "ext_transfer_all";
 
 #[near_bindgen]
 impl Contract {
@@ -45,11 +50,11 @@ impl Contract {
         }
     }
 
-    fn collect_accruals(&mut self, account_id: &AccountId) -> Vec<AssetClaim> {
+    fn collect_accruals(&mut self, account_id: &AccountId) -> Vec<Claim> {
         let account_data = self.accounts.get_mut(account_id).expect("Account data is not found");
 
         let now = now_seconds();
-        let mut details: HashMap<AssetAbbreviation, AssetDetails> = HashMap::new();
+        let mut details: HashMap<Asset, ClaimDetails> = HashMap::new();
 
         for (datetime, index) in &account_data.accruals {
             if now - *datetime > self.burn_period {
@@ -65,34 +70,35 @@ impl Contract {
             };
 
             if !details.contains_key(asset) {
-                details.insert(asset.clone(), AssetDetails::default());
+                details.insert(asset.clone(), ClaimDetails::default());
             }
 
             log_str(format!("Add {amount:?} for {asset}").as_str());
 
             let details = details.get_mut(asset).unwrap();
-            details.0.push((*datetime, *amount));
-            details.1 += *amount;
+            details.accruals.push((*datetime, *amount));
+            details.total += *amount;
             *total -= *amount;
             *amount = 0;
         }
 
         details
             .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
+            .map(|(key, value)| Claim::new(key.clone(), value.clone()))
             .collect()
     }
 
+    #[cfg(not(test))]
     fn transfer(
         &mut self,
         now: UnixTimestamp,
         account_id: AccountId,
-        head: AssetClaim,
-        tail: Vec<AssetClaim>,
+        head: Claim,
+        tail: Vec<Claim>,
         result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView> {
-        let args = Self::compose_transfer_arguments(&account_id, head.1 .1);
-        let token_account_id = self.get_token_account_id(&head.0);
+        let args = Self::compose_transfer_arguments(&account_id, head.details.total);
+        let token_account_id = self.get_token_account_id(&head.asset);
 
         Promise::new(token_account_id)
             .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
@@ -102,6 +108,18 @@ impl Contract {
                     .on_asset_transfer(now, account_id, head, tail, result),
             )
             .into()
+    }
+
+    #[cfg(test)]
+    fn transfer(
+        &mut self,
+        now: UnixTimestamp,
+        account_id: AccountId,
+        head: Claim,
+        tail: Vec<Claim>,
+        result: ClaimAllResultView,
+    ) -> PromiseOrValue<ClaimAllResultView> {
+        self.on_asset_transfer(now, account_id, head, tail, result)
     }
 
     fn compose_transfer_arguments(account_id: &AccountId, amount: TokensAmount) -> Vec<u8> {
@@ -120,13 +138,13 @@ impl Contract {
         is_success: bool,
         now: UnixTimestamp,
         account_id: AccountId,
-        head: AssetClaim,
-    ) -> (AssetAbbreviation, bool, Option<ClaimResultView>) {
+        head: Claim,
+    ) -> ClaimResultView {
         let account = self.accounts.get_mut(&account_id).expect("Account not found");
 
-        let asset = &head.0;
-        let details = &head.1 .0;
-        let amount = head.1 .1;
+        let asset = &head.asset;
+        let details = &head.details.accruals;
+        let amount = head.details.total;
 
         let result = if is_success {
             account.claim_period_refreshed_at = now;
@@ -142,7 +160,7 @@ impl Contract {
             };
             emit(EventKind::Claim(event_data));
 
-            Some(ClaimResultView::new(head.1 .1))
+            Some(amount)
         } else {
             for (timestamp, amount) in details {
                 let daily_accruals = self
@@ -159,7 +177,7 @@ impl Contract {
             None
         };
 
-        (asset.clone(), is_success, result)
+        ClaimResultView::new(asset.clone(), is_success, result)
     }
 }
 
@@ -169,8 +187,8 @@ pub trait Callbacks {
         &mut self,
         now: UnixTimestamp,
         account_id: AccountId,
-        head: AssetClaim,
-        tail: Vec<AssetClaim>,
+        head: Claim,
+        tail: Vec<Claim>,
         result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView>;
 }
@@ -181,11 +199,11 @@ impl Callbacks for Contract {
         &mut self,
         now: UnixTimestamp,
         account_id: AccountId,
-        head: AssetClaim,
-        tail: Vec<AssetClaim>,
+        head: Claim,
+        tail: Vec<Claim>,
         result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView> {
-        let is_success = is_promise_success();
+        let is_success = is_promise_success(EXT_TRANSFER_ALL_FUTURE);
 
         let step_result = self.handle_transfer_result(is_success, now, account_id.clone(), head);
 

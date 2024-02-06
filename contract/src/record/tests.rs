@@ -2,7 +2,7 @@
 
 use model::{
     api::{ClaimApi, RecordApi},
-    AssetAbbreviation,
+    Asset,
 };
 use near_sdk::{json_types::U128, AccountId};
 
@@ -63,7 +63,7 @@ fn test_record() {
 fn record_for_different_tokens() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
-    let another_token: (AssetAbbreviation, AccountId) = (
+    let another_token: (Asset, AccountId) = (
         "TOK".to_string(),
         AccountId::new_unchecked("another.token.testnet".to_string()),
     );

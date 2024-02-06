@@ -2,7 +2,7 @@
 
 use model::{
     api::{ClaimApi, RecordApi},
-    ClaimAvailabilityView, UnixTimestamp,
+    Asset, ClaimAllResultView, ClaimAvailabilityView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
@@ -161,7 +161,7 @@ fn test_claim_when_user_has_tokens_and_claim_period_is_passed() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(alice_balance, claimed_amount.total.0);
+    assert_eq!(alice_balance, claimed_amount.total.unwrap().0);
 
     let alice_new_balance = contract
         .get_claimable_balance_for_account(accounts.alice.clone(), None)
@@ -185,7 +185,7 @@ fn test_claim_when_user_has_tokens_and_burn_period_is_passed() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(0, claimed_amount.total.0);
+    assert_eq!(0, claimed_amount.total.unwrap().0);
 
     let alice_new_balance = contract
         .get_claimable_balance_for_account(accounts.alice.clone(), None)
@@ -209,7 +209,7 @@ fn test_claim_when_user_has_tokens_and_claim_period_is_passed_and_transfer_faile
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(0, claimed_amount.total.0);
+    assert_eq!(0, claimed_amount.total.unwrap().0);
 
     let alice_new_balance = contract
         .get_claimable_balance_for_account(accounts.alice.clone(), None)
@@ -242,7 +242,7 @@ fn test_claim_different_assets() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(alice_balance_sweat, claimed_amount.total.0);
+    assert_eq!(alice_balance_sweat, claimed_amount.total.unwrap().0);
 
     let alice_new_balance_sweat = contract
         .get_claimable_balance_for_account(accounts.alice.clone(), None)
@@ -260,10 +260,63 @@ fn test_claim_different_assets() {
         PromiseOrValue::Promise(_) => panic!("Expected value"),
         PromiseOrValue::Value(value) => value,
     };
-    assert_eq!(alice_balance_another_token, claimed_amount.total.0);
+    assert_eq!(alice_balance_another_token, claimed_amount.total.unwrap().0);
 
     let alice_new_balance_another_token = contract
         .get_claimable_balance_for_account(accounts.alice.clone(), Some("TOK".into()))
         .0;
     assert_eq!(0, alice_new_balance_another_token);
+}
+
+#[test]
+fn test_claim_all_assets() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+    set_test_future_success(EXT_TRANSFER_FUTURE, true);
+
+    contract.register_token("USDT".into(), AccountId::new_unchecked("another.token".to_string()));
+
+    let alice_balance_sweat = 1_000_000;
+    let alice_balance_usdt = 200_000_000;
+
+    context.switch_account(&accounts.oracle);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance_sweat))], None);
+    context.set_block_timestamp_in_seconds(1);
+    contract.record_batch_for_hold(
+        vec![(accounts.alice.clone(), U128(alice_balance_usdt))],
+        Some("USDT".to_string()),
+    );
+
+    context.set_block_timestamp_in_seconds(contract.claim_period as u64 + 100);
+
+    context.switch_account(&accounts.alice);
+    let claimed_amount = match contract.claim_all() {
+        PromiseOrValue::Promise(_) => panic!("Expected value"),
+        PromiseOrValue::Value(value) => value,
+    };
+
+    let claimed_sweat = claimed_amount.total_for_asset("SWEAT".into());
+    assert_eq!(alice_balance_sweat, claimed_sweat);
+
+    let claimed_usdt = claimed_amount.total_for_asset("USDT".into());
+    assert_eq!(alice_balance_usdt, claimed_usdt);
+
+    let alice_new_balance_sweat = contract
+        .get_claimable_balance_for_account(accounts.alice.clone(), None)
+        .0;
+    assert_eq!(0, alice_new_balance_sweat);
+
+    let alice_new_balance_tok = contract
+        .get_claimable_balance_for_account(accounts.alice.clone(), Some("USDT".into()))
+        .0;
+    assert_eq!(0, alice_new_balance_tok);
+}
+
+trait ClaimAllResultViewExt {
+    fn total_for_asset(&self, asset: Asset) -> TokensAmount;
+}
+
+impl ClaimAllResultViewExt for ClaimAllResultView {
+    fn total_for_asset(&self, asset: Asset) -> TokensAmount {
+        self.0.iter().find(|x| x.asset == asset).unwrap().total.unwrap().0
+    }
 }
