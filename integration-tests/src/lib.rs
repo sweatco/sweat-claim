@@ -9,7 +9,7 @@ use near_sdk::{json_types::U64, serde_json::json};
 use sweat_model::{FungibleTokenCoreIntegration, Payout, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
-    common::PanicFinder,
+    common::{calculate_fee, PanicFinder},
     interface::common::ContractAccount,
     prepare::{prepare_contract, IntegrationContext, BURN_PERIOD, CLAIM_PERIOD},
 };
@@ -49,7 +49,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(alice_deferred_balance.0, target_payout.amount_for_user);
@@ -64,7 +64,7 @@ async fn happy_flow() -> anyhow::Result<()> {
     let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).call().await?;
     assert_eq!(is_claim_available, ClaimAvailabilityView::Available);
 
-    context.sweat_claim().claim().with_user(&alice).call().await?;
+    context.sweat_claim().claim(None).with_user(&alice).call().await?;
 
     let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
@@ -110,7 +110,7 @@ async fn burn() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(0, alice_deferred_balance.0);
@@ -143,7 +143,7 @@ async fn outdate() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);
@@ -152,7 +152,7 @@ async fn outdate() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(0, alice_deferred_balance.0);
@@ -186,7 +186,7 @@ async fn outdate() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(
@@ -198,7 +198,7 @@ async fn outdate() -> anyhow::Result<()> {
 
     let alice_deferred_balance = context
         .sweat_claim()
-        .get_claimable_balance_for_account(alice.to_near())
+        .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
     assert_eq!(target_effective_token_amount, alice_deferred_balance);

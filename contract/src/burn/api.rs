@@ -20,7 +20,7 @@ impl BurnApi for Contract {
         let mut keys_to_remove = vec![];
         let now = now_seconds();
 
-        for (datetime, (_, total)) in self.accruals.iter() {
+        for (datetime, (_, total, _)) in self.accruals.iter() {
             if now - datetime >= self.burn_period {
                 keys_to_remove.push(*datetime);
                 total_to_burn += total;
@@ -66,8 +66,7 @@ impl Contract {
 pub(crate) mod prod {
     use model::{TokensAmount, UnixTimestamp};
     use near_sdk::{
-        env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, Gas, Promise,
-        PromiseOrValue,
+        ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, PromiseOrValue,
     };
 
     use crate::{Contract, ContractExt};
@@ -98,14 +97,17 @@ pub(crate) mod prod {
             .as_bytes()
             .to_vec();
 
-            Promise::new(self.token_account_id.clone())
-                .function_call("burn".to_string(), args, 0, Gas(5 * Gas::ONE_TERA.0))
-                .then(
-                    ext_self::ext(env::current_account_id())
-                        .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
-                        .on_burn(total_to_burn, keys_to_remove),
-                )
-                .into()
+            // TODO: make common burn
+            // Promise::new(self.token_account_id.clone())
+            //     .function_call("burn".to_string(), args, 0, Gas(5 * Gas::ONE_TERA.0))
+            //     .then(
+            //         ext_self::ext(env::current_account_id())
+            //             .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
+            //             .on_burn(total_to_burn, keys_to_remove),
+            //     )
+            //     .into()
+
+            PromiseOrValue::Value(0.into())
         }
     }
 }

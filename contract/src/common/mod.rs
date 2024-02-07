@@ -1,8 +1,27 @@
-use model::UnixTimestamp;
-use near_sdk::env::{block_timestamp_ms, panic_str};
+use model::{Asset, UnixTimestamp};
+use near_sdk::{
+    env::{block_timestamp_ms, panic_str},
+    AccountId,
+};
+
+#[cfg(test)]
+use crate::common::tests::data::get_test_future_success;
+use crate::Contract;
 
 mod asserts;
 pub(crate) mod tests;
+
+pub(crate) fn is_promise_success(tag: &str) -> bool {
+    #[cfg(test)]
+    {
+        get_test_future_success(tag)
+    }
+
+    #[cfg(not(test))]
+    {
+        near_sdk::is_promise_success()
+    }
+}
 
 fn ms_timestamp_to_seconds(ms: u64) -> UnixTimestamp {
     u32::try_from(ms / 1000)
@@ -11,6 +30,15 @@ fn ms_timestamp_to_seconds(ms: u64) -> UnixTimestamp {
 
 pub(crate) fn now_seconds() -> UnixTimestamp {
     ms_timestamp_to_seconds(block_timestamp_ms())
+}
+
+impl Contract {
+    pub(crate) fn get_token_account_id(&self, asset: &Asset) -> AccountId {
+        self.token_account_ids
+            .get(asset.as_str())
+            .unwrap_or_else(|| panic_str(&format!("Token {asset} is not registered")))
+            .clone()
+    }
 }
 
 #[test]

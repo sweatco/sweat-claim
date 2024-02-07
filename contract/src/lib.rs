@@ -1,4 +1,4 @@
-use model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
+use model::{account_record::AccountRecord, api::InitApi, Asset, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
@@ -21,11 +21,7 @@ const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    /// The account ID of the fungible token contract serviced by this smart contract.
-    ///
-    /// This field specifies the associated fungible token contract with which this smart
-    /// contract interacts.
-    token_account_id: AccountId,
+    token_account_ids: LookupMap<Asset, AccountId>,
 
     /// A set of account IDs authorized to perform sensitive operations within the contract.
     ///
@@ -65,7 +61,7 @@ pub struct Contract {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
+    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount, Asset)>,
 
     /// A map containing accrual and service details for each user account.
     ///
@@ -80,6 +76,8 @@ pub struct Contract {
     /// contract is currently executing a service call. This flag ensures the integrity of
     /// token transactions and operations within the contract.
     is_service_call_running: bool,
+
+    default_asset: Asset,
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
@@ -88,16 +86,20 @@ enum StorageKey {
     Accruals,
     AccrualsEntry(u32),
     Oracles,
+    TokenAccounts,
 }
 
 #[near_bindgen]
 impl InitApi for Contract {
     #[init]
-    fn init(token_account_id: AccountId) -> Self {
+    fn init(default_token: (Asset, AccountId)) -> Self {
         Self::assert_private();
 
+        let mut token_account_ids = LookupMap::new(StorageKey::TokenAccounts);
+        token_account_ids.insert(default_token.0.clone(), default_token.1);
+
         Self {
-            token_account_id,
+            token_account_ids,
 
             accounts: LookupMap::new(StorageKey::Accounts),
             accruals: UnorderedMap::new(StorageKey::Accruals),
@@ -107,6 +109,15 @@ impl InitApi for Contract {
             burn_period: INITIAL_BURN_PERIOD_MS,
 
             is_service_call_running: false,
+
+            default_asset: default_token.0,
         }
+    }
+}
+
+#[near_bindgen]
+impl Contract {
+    pub fn register_token(&mut self, symbol: Asset, account_id: AccountId) {
+        self.token_account_ids.insert(symbol, account_id);
     }
 }
