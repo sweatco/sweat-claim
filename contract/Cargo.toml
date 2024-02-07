@@ -9,5 +9,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 near-sdk = { workspace = true }
+near-contract-standards = "4.1.1"
 
 model = { workspace = true }
