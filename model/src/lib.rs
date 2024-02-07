@@ -14,6 +14,10 @@ pub type Duration = u32;
 // Period in seconds
 pub type Asset = String;
 
+pub fn is_near(asset: &Asset) -> bool {
+    asset.as_str() == "NEAR"
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]
 pub enum ClaimAvailabilityView {
