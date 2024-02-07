@@ -317,6 +317,6 @@ trait ClaimAllResultViewExt {
 
 impl ClaimAllResultViewExt for ClaimAllResultView {
     fn total_for_asset(&self, asset: Asset) -> TokensAmount {
-        self.0.iter().find(|x| x.asset == asset).unwrap().total.unwrap().0
+        self.iter().find(|x| x.asset == asset).unwrap().total.unwrap().0
     }
 }

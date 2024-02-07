@@ -11,4 +11,3 @@ crate-type = ["cdylib"]
 near-sdk = { workspace = true }
 
 model = { workspace = true }
-serde = { version = "1.0.195", features = ["derive"] }

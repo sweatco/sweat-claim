@@ -54,7 +54,7 @@ impl Contract {
         let account_data = self.accounts.get_mut(account_id).expect("Account data is not found");
 
         let now = now_seconds();
-        let mut details: HashMap<Asset, ClaimDetails> = HashMap::new();
+        let mut details = HashMap::<Asset, ClaimDetails>::new();
 
         for (datetime, index) in &account_data.accruals {
             if now - *datetime > self.burn_period {
@@ -82,10 +82,7 @@ impl Contract {
             *amount = 0;
         }
 
-        details
-            .iter()
-            .map(|(key, value)| Claim::new(key.clone(), value.clone()))
-            .collect()
+        details.into_iter().map(|(key, value)| Claim::new(key, value)).collect()
     }
 
     #[cfg(not(test))]
@@ -201,21 +198,19 @@ impl Callbacks for Contract {
         account_id: AccountId,
         head: Claim,
         tail: Vec<Claim>,
-        result: ClaimAllResultView,
+        mut result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView> {
         let is_success = is_promise_success(EXT_TRANSFER_ALL_FUTURE);
 
         let step_result = self.handle_transfer_result(is_success, now, account_id.clone(), head);
 
-        let mut result = result.0;
         result.push(step_result);
-        let result_view = ClaimAllResultView(result);
 
         if tail.is_empty() {
-            PromiseOrValue::Value(result_view)
+            PromiseOrValue::Value(result)
         } else {
             let (head, tail) = tail.split_first().unwrap();
-            self.transfer(now, account_id, head.clone(), tail.to_vec(), result_view)
+            self.transfer(now, account_id, head.clone(), tail.to_vec(), result)
         }
     }
 }

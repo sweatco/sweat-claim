@@ -10,7 +10,8 @@ use near_sdk::{
 pub type UnixTimestamp = u32;
 pub type AccrualIndex = u32;
 pub type TokensAmount = u128;
-pub type Duration = u32; // Period in seconds
+pub type Duration = u32;
+// Period in seconds
 pub type Asset = String;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -39,6 +40,4 @@ impl ClaimResultView {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
-#[serde(crate = "near_sdk::serde")]
-pub struct ClaimAllResultView(pub Vec<ClaimResultView>);
+pub type ClaimAllResultView = Vec<ClaimResultView>;
