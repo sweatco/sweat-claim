@@ -6,7 +6,7 @@ use model::{
     ClaimAvailabilityView,
 };
 use near_sdk::{json_types::U64, serde_json::json};
-use sweat_model::{FungibleTokenCoreIntegration, SweatApiIntegration, SweatDeferIntegration};
+use sweat_model::{FungibleTokenCoreIntegration, Payout, SweatApiIntegration, SweatDeferIntegration};
 
 use crate::{
     common::{calculate_fee, PanicFinder},
@@ -16,6 +16,7 @@ use crate::{
 
 mod common;
 mod interface;
+mod measure;
 mod prepare;
 
 #[tokio::test]
@@ -29,8 +30,7 @@ async fn happy_flow() -> anyhow::Result<()> {
     let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
 
     let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
-    let target_fee = calculate_fee(target_token_amount);
-    let target_effective_token_amount = target_token_amount - target_fee;
+    let target_payout = Payout::from(target_token_amount);
 
     context
         .ft_contract()
@@ -45,14 +45,14 @@ async fn happy_flow() -> anyhow::Result<()> {
         .call()
         .await?;
 
-    assert_eq!(claim_contract_balance.0, target_effective_token_amount);
+    assert_eq!(claim_contract_balance.0, target_payout.amount_for_user);
 
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near(), None)
         .call()
         .await?;
-    assert_eq!(alice_deferred_balance.0, target_effective_token_amount);
+    assert_eq!(alice_deferred_balance.0, target_payout.amount_for_user);
 
     let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).call().await?;
     assert!(matches!(is_claim_available, ClaimAvailabilityView::Unavailable(_)));
@@ -68,7 +68,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).call().await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
-    assert_eq!(alice_balance_change, target_effective_token_amount);
+    assert_eq!(alice_balance_change, target_payout.amount_for_user);
 
     Ok(())
 }
@@ -83,8 +83,7 @@ async fn burn() -> anyhow::Result<()> {
     let alice_steps = 10_000;
 
     let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).call().await?.0;
-    let target_fee = calculate_fee(target_token_amount);
-    let target_effective_token_amount = target_token_amount - target_fee;
+    let target_payout = Payout::from(target_token_amount);
 
     context
         .ft_contract()
@@ -99,7 +98,7 @@ async fn burn() -> anyhow::Result<()> {
         .call()
         .await?;
 
-    assert_eq!(claim_contract_balance.0, target_effective_token_amount);
+    assert_eq!(claim_contract_balance.0, target_payout.amount_for_user);
 
     let burn_result = context.sweat_claim().burn().with_user(&manager).call().await?;
     assert_eq!(0, burn_result.0);
@@ -107,7 +106,7 @@ async fn burn() -> anyhow::Result<()> {
     context.fast_forward_hours((BURN_PERIOD / (60 * 60) + 1) as u64).await?;
 
     let burn_result = context.sweat_claim().burn().with_user(&manager).call().await?;
-    assert_eq!(target_effective_token_amount, burn_result.0);
+    assert_eq!(target_payout.amount_for_user, burn_result.0);
 
     let alice_deferred_balance = context
         .sweat_claim()
