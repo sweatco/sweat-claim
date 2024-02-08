@@ -122,4 +122,8 @@ impl Contract {
     pub fn register_token(&mut self, symbol: Asset, account_id: AccountId) {
         self.token_account_ids.insert(symbol, account_id);
     }
+
+    pub fn get_tokens(&self) -> HashMap<Asset, AccountId> {
+        self.token_account_ids.clone()
+    }
 }
