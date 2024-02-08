@@ -1,7 +1,7 @@
 use integration_trait::make_integration_version;
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
-use crate::{Asset, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, Duration};
+use crate::{Asset, BatchedAccruals, ClaimAvailabilityView, ClaimResultView, Duration};
 
 /// An API for initializing smart contracts in the context of fungible token operations.
 ///
@@ -147,7 +147,7 @@ pub trait RecordApi {
     /// # Panics
     ///
     /// Panics if called by any account other than an oracle.
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<Asset>);
+    fn record_batch_for_hold(&mut self, amounts: BatchedAccruals, asset: Option<Asset>);
 }
 
 /// An API for managing the claiming process of accrued tokens in the smart contract.

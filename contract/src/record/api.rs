@@ -2,18 +2,23 @@ use model::{
     account_record::AccountRecord,
     api::RecordApi,
     event::{emit, EventKind, RecordData},
-    Asset,
+    is_near, AccrualsExt, Asset, BatchedAccruals,
 };
-use near_sdk::{json_types::U128, near_bindgen, require, store::Vector, AccountId};
+use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
 
 #[near_bindgen]
 impl RecordApi for Contract {
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<Asset>) {
+    #[payable]
+    fn record_batch_for_hold(&mut self, amounts: BatchedAccruals, asset: Option<Asset>) {
         self.assert_oracle();
 
         let asset = asset.unwrap_or("SWEAT".to_string());
+
+        if is_near(&asset) {
+            Self::assert_deposit(amounts.total_amount());
+        }
 
         let now_seconds = now_seconds();
         let mut balances = Vector::new(AccrualsEntry(now_seconds));
