@@ -1,4 +1,4 @@
-use model::{Asset, UnixTimestamp};
+use model::{Asset, TokensAmount, UnixTimestamp};
 use near_sdk::{
     env::{block_timestamp_ms, panic_str},
     AccountId,
