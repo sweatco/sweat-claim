@@ -20,7 +20,7 @@ impl BurnApi for Contract {
         let mut keys_to_remove = vec![];
         let now = now_seconds();
 
-        for (datetime, (_, total)) in self.accruals.iter() {
+        for (datetime, (_, total)) in self.get_sweat_accruals().iter() {
             if now - datetime >= self.burn_period {
                 keys_to_remove.push(*datetime);
                 total_to_burn += total;
@@ -50,8 +50,9 @@ impl Contract {
             return U128(0);
         }
 
+        let sweat_accruals = self.get_sweat_accruals_mut();
         for datetime in keys_to_remove {
-            self.accruals.remove(&datetime);
+            sweat_accruals.remove(&datetime);
         }
 
         emit(EventKind::Burn(BurnData {

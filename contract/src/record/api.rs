@@ -42,12 +42,13 @@ impl RecordApi for Contract {
             }
         }
 
-        if self.accruals.contains_key(&now_seconds) {
-            let current_accruals = self.accruals.get_mut(&now_seconds).unwrap();
+        let sweat_accruals = self.get_sweat_accruals_mut();
+        if sweat_accruals.contains_key(&now_seconds) {
+            let current_accruals = sweat_accruals.get_mut(&now_seconds).unwrap();
             current_accruals.0.extend(balances.iter().cloned());
             current_accruals.1 += total_balance;
         } else {
-            self.accruals.insert(now_seconds, (balances, total_balance));
+            sweat_accruals.insert(now_seconds, (balances, total_balance));
         }
 
         emit(EventKind::Record(event_data));

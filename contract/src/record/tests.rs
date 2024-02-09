@@ -47,7 +47,7 @@ fn record_by_not_oracle() {
 fn test_multiple_records_in_the_same_block() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
-    let target_accruals = vec![10, 20];
+    let target_accruals = [10, 20];
     let batches: Vec<Vec<(AccountId, U128)>> = target_accruals
         .iter()
         .map(|&amount| vec![(accounts.alice.clone(), amount.into())])
@@ -57,7 +57,7 @@ fn test_multiple_records_in_the_same_block() {
     contract.record_batch_for_hold(batches.get(0).unwrap().clone());
     contract.record_batch_for_hold(batches.get(1).unwrap().clone());
 
-    let accruals = contract.accruals.get(&0).unwrap();
+    let accruals = contract.get_sweat_accruals().get(&0).unwrap();
     assert_eq!(accruals.0.len(), target_accruals.len() as u32);
     assert_eq!(accruals.1, target_accruals.iter().sum::<u128>());
 }
