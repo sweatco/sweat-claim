@@ -1,6 +1,7 @@
 use near_sdk::{
-    env::{current_account_id, predecessor_account_id},
-    require, AccountId,
+    env::{attached_deposit, current_account_id, predecessor_account_id},
+    json_types::U128,
+    require, AccountId, Balance,
 };
 
 use crate::Contract;
@@ -27,5 +28,12 @@ impl Contract {
 
     fn is_registered_token_account(&self, token_account_id: AccountId) -> bool {
         self.token_account_ids.values().any(|value| *value == token_account_id)
+    }
+
+    pub(crate) fn assert_deposit(amount: Balance) {
+        require!(
+            amount == attached_deposit(),
+            "Attached deposit does not match the total amount of tokens."
+        );
     }
 }

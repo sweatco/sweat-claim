@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAllResultView, ClaimAvailabilityView, ClaimResultView,
+    is_near, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView,
 };
 use near_sdk::{
     env, env::log_str, ext_contract, json_types::U128, require, serde_json::json, Gas, Promise, PromiseOrValue,
@@ -95,10 +95,15 @@ impl Contract {
         result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView> {
         let args = Self::compose_transfer_arguments(&account_id, head.details.total);
-        let token_account_id = self.get_token_account_id(&head.asset);
 
-        Promise::new(token_account_id)
-            .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
+        let transfer_promise = if is_near(&head.asset) {
+            Promise::new(account_id.clone()).transfer(head.details.total)
+        } else {
+            let token_account_id = self.get_token_account_id(&head.asset);
+            Promise::new(token_account_id).function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
+        };
+
+        transfer_promise
             .then(
                 ext_self::ext(env::current_account_id())
                     .with_static_gas(Gas(5 * Gas::ONE_TERA.0))
