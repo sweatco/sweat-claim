@@ -10,15 +10,15 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 #[near_bindgen]
 impl ClaimApi for Contract {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
-        let Some(account_data) = self.accounts.get(&account_id) else {
+        let Some(account_data) = self.get_sweat_account_data(&account_id) else {
             return U128(0);
         };
 
         let mut total_accrual = 0;
         let now = now_seconds();
-        let sweat_accruals = self.get_sweat_accruals();
+        let sweat_accruals = self.get_sweat_accruals_unsafe();
 
-        for (datetime, index) in &account_data.accruals {
+        for (datetime, index) in account_data {
             if now - datetime > self.burn_period {
                 continue;
             }
@@ -57,18 +57,18 @@ impl ClaimApi for Contract {
         );
 
         require!(
-            !self.get_account_data(&account_id).is_locked,
+            !self.get_account_data_unsafe(&account_id).is_locked,
             "Another operation is running"
         );
 
-        self.get_account_data_mut(&account_id).is_locked = true;
+        self.get_account_data_unsafe_mut(&account_id).is_locked = true;
 
         let now = now_seconds();
         let mut total_accrual = 0;
         let burn_period = self.burn_period;
 
         let mut details: Vec<(UnixTimestamp, AccrualIndex)> = vec![];
-        for (datetime, index) in &self.get_account_data_mut(&account_id).accruals {
+        for (datetime, index) in self.get_sweat_account_data_unsafe_mut(&account_id).iter() {
             if now - datetime > burn_period {
                 continue;
             }
@@ -78,12 +78,12 @@ impl ClaimApi for Contract {
 
         let mut amount_details: Vec<(UnixTimestamp, TokensAmount)> = vec![];
         for (datetime, index) in &details {
-            let Some((accruals, _)) = self.get_sweat_accruals_mut().get(datetime) else {
+            let Some((accruals, _)) = self.get_sweat_accruals_unsafe_mut().get(datetime) else {
                 continue;
             };
 
             if let Some(amount) = accruals.get(*index).cloned() {
-                let accrual = self.get_sweat_accruals_mut().get_mut(datetime).unwrap();
+                let accrual = self.get_sweat_accruals_unsafe_mut().get_mut(datetime).unwrap();
                 accrual.0.set(*index, 0);
                 accrual.1 -= amount;
 
@@ -93,12 +93,14 @@ impl ClaimApi for Contract {
             }
         }
 
-        self.get_account_data_mut(&account_id).accruals.clear();
+        self.get_account_data_unsafe_mut(&account_id)
+            .get_sweat_accruals_unsafe_mut()
+            .clear();
 
         if total_accrual > 0 {
             self.transfer_external(now, account_id, total_accrual, amount_details)
         } else {
-            self.get_account_data_mut(&account_id).is_locked = false;
+            self.get_account_data_unsafe_mut(&account_id).is_locked = false;
             PromiseOrValue::Value(ClaimResultView::new(0))
         }
     }
@@ -113,10 +115,10 @@ impl Contract {
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
     ) -> ClaimResultView {
-        self.get_account_data_mut(&account_id).is_locked = false;
+        self.get_account_data_unsafe_mut(&account_id).is_locked = false;
 
         if is_success {
-            self.get_account_data_mut(&account_id).claim_period_refreshed_at = now;
+            self.get_account_data_unsafe_mut(&account_id).claim_period_refreshed_at = now;
 
             let event_data = ClaimData {
                 account_id,
@@ -132,21 +134,22 @@ impl Contract {
         }
 
         for (timestamp, amount) in details {
-            if !self.get_sweat_accruals().contains_key(&timestamp) {
-                self.get_sweat_accruals_mut()
+            if !self.get_sweat_accruals_unsafe().contains_key(&timestamp) {
+                self.get_sweat_accruals_unsafe_mut()
                     .insert(timestamp, (Vector::new(AccrualsEntry(timestamp)), 0));
             }
 
-            self.get_sweat_accruals_mut()
+            self.get_sweat_accruals_unsafe_mut()
                 .get_mut(&timestamp)
                 .unwrap()
                 .0
                 .push(amount);
-            self.get_sweat_accruals_mut().get_mut(&timestamp).unwrap().1 += amount;
+            self.get_sweat_accruals_unsafe_mut().get_mut(&timestamp).unwrap().1 += amount;
 
-            let accrual_index = self.get_sweat_accruals().get(&timestamp).unwrap().0.len() - 1;
-            self.get_account_data_mut(&account_id)
-                .accruals
+            let accrual_index = self.get_sweat_accruals_unsafe().get(&timestamp).unwrap().0.len() - 1;
+
+            self.get_account_data_unsafe_mut(&account_id)
+                .get_sweat_accruals_unsafe_mut()
                 .push((timestamp, accrual_index));
         }
 

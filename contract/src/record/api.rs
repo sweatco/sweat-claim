@@ -31,18 +31,16 @@ impl RecordApi for Contract {
             balances.push(amount);
 
             if let Some(record) = self.accounts.get_mut(&account_id) {
-                record.accruals.push((now_seconds, index));
+                record.get_sweat_accruals_unsafe_mut().push((now_seconds, index));
             } else {
-                let record = AccountRecord {
-                    accruals: vec![(now_seconds, index)],
-                    ..AccountRecord::new(now_seconds)
-                };
+                let mut record = AccountRecord::new(now_seconds, None);
+                record.get_sweat_accruals_unsafe_mut().push((now_seconds, index));
 
                 self.accounts.insert(account_id, record);
             }
         }
 
-        let sweat_accruals = self.get_sweat_accruals_mut();
+        let sweat_accruals = self.get_sweat_accruals_unsafe_mut();
         if sweat_accruals.contains_key(&now_seconds) {
             let current_accruals = sweat_accruals.get_mut(&now_seconds).unwrap();
             current_accruals.0.extend(balances.iter().cloned());

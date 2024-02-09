@@ -1,4 +1,4 @@
-use model::{account_record::AccountRecord, UnixTimestamp};
+use model::{account_record::AccountRecord, AccrualIndex, UnixTimestamp};
 use near_sdk::{
     env::{block_timestamp_ms, panic_str},
     AccountId,
@@ -19,20 +19,51 @@ pub(crate) fn now_seconds() -> UnixTimestamp {
 }
 
 impl Contract {
-    pub(crate) fn get_sweat_accruals(&self) -> &AccrualsMap {
-        self.accruals.get(&"SWEAT".to_string()).unwrap()
+    pub(crate) fn get_sweat_accruals(&self) -> Option<&AccrualsMap> {
+        self.accruals.get(&"SWEAT".to_string())
+    }
+    pub(crate) fn get_sweat_accruals_unsafe(&self) -> &AccrualsMap {
+        self.get_sweat_accruals().unwrap()
     }
 
-    pub(crate) fn get_sweat_accruals_mut(&mut self) -> &mut AccrualsMap {
+    pub(crate) fn get_sweat_accruals_unsafe_mut(&mut self) -> &mut AccrualsMap {
         self.accruals.get_mut(&"SWEAT".to_string()).unwrap()
     }
 
-    pub(crate) fn get_account_data(&self, account_id: &AccountId) -> &AccountRecord {
-        self.accounts.get(account_id).unwrap()
+    pub(crate) fn get_account_data(&self, account_id: &AccountId) -> Option<&AccountRecord> {
+        self.accounts.get(account_id)
     }
 
-    pub(crate) fn get_account_data_mut(&mut self, account_id: &AccountId) -> &mut AccountRecord {
-        self.accounts.get_mut(account_id).unwrap()
+    pub(crate) fn get_account_data_unsafe(&self, account_id: &AccountId) -> &AccountRecord {
+        self.get_account_data(account_id).unwrap()
+    }
+
+    pub(crate) fn get_account_data_unsafe_mut(&mut self, account_id: &AccountId) -> &mut AccountRecord {
+        self.get_account_data_mut(account_id).unwrap()
+    }
+
+    pub(crate) fn get_account_data_mut(&mut self, account_id: &AccountId) -> Option<&mut AccountRecord> {
+        self.accounts.get_mut(account_id)
+    }
+
+    pub(crate) fn get_sweat_account_data_unsafe(&self, account_id: &AccountId) -> &Vec<(UnixTimestamp, AccrualIndex)> {
+        self.get_account_data_unsafe(account_id).get_sweat_accruals_unsafe()
+    }
+
+    pub(crate) fn get_sweat_account_data(&self, account_id: &AccountId) -> Option<&Vec<(UnixTimestamp, AccrualIndex)>> {
+        if let Some(record) = self.get_account_data(account_id) {
+            record.get_sweat_accruals()
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn get_sweat_account_data_unsafe_mut(
+        &mut self,
+        account_id: &AccountId,
+    ) -> &mut Vec<(UnixTimestamp, AccrualIndex)> {
+        self.get_account_data_unsafe_mut(account_id)
+            .get_sweat_accruals_unsafe_mut()
     }
 }
 
