@@ -18,7 +18,7 @@ impl Contract {
         require!(
             self.oracles.contains(&predecessor_account_id())
                 || self.is_registered_token_account(predecessor_account_id()),
-            "Unauthorized access! Only oracle or owner can do this!"
+            "Unauthorized access! Only oracle or registered token owner can do this!"
         );
     }
 
