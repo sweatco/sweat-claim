@@ -3,7 +3,7 @@ use model::{
     api::RecordApi,
     event::{emit, EventKind, RecordData},
 };
-use near_sdk::{json_types::U128, near_bindgen, require, store::Vector, AccountId};
+use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
 
@@ -42,13 +42,14 @@ impl RecordApi for Contract {
             }
         }
 
-        let existing = self.accruals.insert(now_seconds, (balances, total_balance));
+        if self.accruals.contains_key(&now_seconds) {
+            let current_accruals = self.accruals.get_mut(&now_seconds).unwrap();
+            current_accruals.0.extend(balances.iter().cloned());
+            current_accruals.1 += total_balance;
+        } else {
+            self.accruals.insert(now_seconds, (balances, total_balance));
+        }
 
         emit(EventKind::Record(event_data));
-
-        require!(
-            existing.is_none(),
-            format!("Record for this timestamp: {now_seconds} already existed. It was overwritten.")
-        );
     }
 }
