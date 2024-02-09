@@ -1,9 +1,11 @@
+use std::collections::HashMap;
+
 use near_sdk::{
     borsh,
     borsh::{BorshDeserialize, BorshSerialize},
 };
 
-use crate::{AccrualIndex, UnixTimestamp};
+use crate::{AccrualIndex, Asset, UnixTimestamp};
 
 /// Represents the state of a registered account in the smart contract.
 ///
@@ -30,7 +32,7 @@ pub struct AccountRecord {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    pub accruals: Vec<(UnixTimestamp, AccrualIndex)>,
+    pub accruals: HashMap<Asset, Vec<(UnixTimestamp, AccrualIndex)>>,
 
     /// Indicates whether the user is authorized to use the contract's features.
     ///
@@ -56,12 +58,27 @@ pub struct AccountRecord {
 }
 
 impl AccountRecord {
-    pub fn new(now: UnixTimestamp) -> Self {
+    pub fn new(now: UnixTimestamp, asset: Option<Asset>) -> Self {
+        let mut accruals = HashMap::new();
+        accruals.insert(asset.unwrap_or("SWEAT".to_string()), Vec::new());
+
         Self {
-            accruals: Vec::new(),
+            accruals,
             is_enabled: true,
             claim_period_refreshed_at: now,
             is_locked: false,
         }
+    }
+
+    pub fn get_sweat_accruals(&self) -> Option<&Vec<(UnixTimestamp, AccrualIndex)>> {
+        self.accruals.get("SWEAT")
+    }
+
+    pub fn get_sweat_accruals_unsafe(&self) -> &Vec<(UnixTimestamp, AccrualIndex)> {
+        self.get_sweat_accruals().unwrap()
+    }
+
+    pub fn get_sweat_accruals_unsafe_mut(&mut self) -> &mut Vec<(UnixTimestamp, AccrualIndex)> {
+        self.accruals.get_mut("SWEAT").unwrap()
     }
 }

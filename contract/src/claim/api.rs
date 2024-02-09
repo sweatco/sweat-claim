@@ -1,7 +1,7 @@
 use model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
+    AccrualIndex, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
@@ -10,19 +10,20 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 #[near_bindgen]
 impl ClaimApi for Contract {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
-        let Some(account_data) = self.accounts.get(&account_id) else {
+        let Some(account_data) = self.get_sweat_account_data(&account_id) else {
             return U128(0);
         };
 
         let mut total_accrual = 0;
         let now = now_seconds();
+        let sweat_accruals = self.get_sweat_accruals_unsafe();
 
-        for (datetime, index) in &account_data.accruals {
+        for (datetime, index) in account_data {
             if now - datetime > self.burn_period {
                 continue;
             }
 
-            let Some((accruals, _)) = self.accruals.get(datetime) else {
+            let Some((accruals, _)) = sweat_accruals.get(datetime) else {
                 continue;
             };
 
@@ -55,41 +56,51 @@ impl ClaimApi for Contract {
             "Claim is not available at the moment"
         );
 
-        let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
-        require!(!account_data.is_locked, "Another operation is running");
+        require!(
+            !self.get_account_data_unsafe(&account_id).is_locked,
+            "Another operation is running"
+        );
 
-        account_data.is_locked = true;
+        self.get_account_data_unsafe_mut(&account_id).is_locked = true;
 
         let now = now_seconds();
         let mut total_accrual = 0;
-        let mut details = vec![];
+        let burn_period = self.burn_period;
 
-        for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
+        let mut details: Vec<(UnixTimestamp, AccrualIndex)> = vec![];
+        for (datetime, index) in self.get_sweat_account_data_unsafe_mut(&account_id).iter() {
+            if now - datetime > burn_period {
                 continue;
             }
 
-            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
-                continue;
-            };
-
-            let Some(amount) = accruals.get_mut(*index) else {
-                continue;
-            };
-
-            details.push((*datetime, *amount));
-
-            total_accrual += *amount;
-            *total -= *amount;
-            *amount = 0;
+            details.push((*datetime, *index));
         }
 
-        account_data.accruals.clear();
+        let mut amount_details: Vec<(UnixTimestamp, TokensAmount)> = vec![];
+        for (datetime, index) in &details {
+            let Some((accruals, _)) = self.get_sweat_accruals_unsafe_mut().get(datetime) else {
+                continue;
+            };
+
+            if let Some(amount) = accruals.get(*index).cloned() {
+                let accrual = self.get_sweat_accruals_unsafe_mut().get_mut(datetime).unwrap();
+                accrual.0.set(*index, 0);
+                accrual.1 -= amount;
+
+                total_accrual += amount;
+
+                amount_details.push((*datetime, amount));
+            }
+        }
+
+        self.get_account_data_unsafe_mut(&account_id)
+            .get_sweat_accruals_unsafe_mut()
+            .clear();
 
         if total_accrual > 0 {
-            self.transfer_external(now, account_id, total_accrual, details)
+            self.transfer_external(now, account_id, total_accrual, amount_details)
         } else {
-            account_data.is_locked = false;
+            self.get_account_data_unsafe_mut(&account_id).is_locked = false;
             PromiseOrValue::Value(ClaimResultView::new(0))
         }
     }
@@ -104,11 +115,10 @@ impl Contract {
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
     ) -> ClaimResultView {
-        let account = self.accounts.get_mut(&account_id).expect("Account not found");
-        account.is_locked = false;
+        self.get_account_data_unsafe_mut(&account_id).is_locked = false;
 
         if is_success {
-            account.claim_period_refreshed_at = now;
+            self.get_account_data_unsafe_mut(&account_id).claim_period_refreshed_at = now;
 
             let event_data = ClaimData {
                 account_id,
@@ -124,15 +134,23 @@ impl Contract {
         }
 
         for (timestamp, amount) in details {
-            let daily_accruals = self
-                .accruals
-                .entry(timestamp)
-                .or_insert_with(|| (Vector::new(AccrualsEntry(timestamp)), 0));
+            if !self.get_sweat_accruals_unsafe().contains_key(&timestamp) {
+                self.get_sweat_accruals_unsafe_mut()
+                    .insert(timestamp, (Vector::new(AccrualsEntry(timestamp)), 0));
+            }
 
-            daily_accruals.0.push(amount);
-            daily_accruals.1 += amount;
+            self.get_sweat_accruals_unsafe_mut()
+                .get_mut(&timestamp)
+                .unwrap()
+                .0
+                .push(amount);
+            self.get_sweat_accruals_unsafe_mut().get_mut(&timestamp).unwrap().1 += amount;
 
-            account.accruals.push((timestamp, daily_accruals.0.len() - 1));
+            let accrual_index = self.get_sweat_accruals_unsafe().get(&timestamp).unwrap().0.len() - 1;
+
+            self.get_account_data_unsafe_mut(&account_id)
+                .get_sweat_accruals_unsafe_mut()
+                .push((timestamp, accrual_index));
         }
 
         ClaimResultView::new(0)

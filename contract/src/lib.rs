@@ -1,10 +1,12 @@
-use model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
+use model::{account_record::AccountRecord, api::InitApi, Asset, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
     store::{LookupMap, UnorderedMap, UnorderedSet, Vector},
     AccountId, BorshStorageKey, PanicOnDefault,
 };
+
+use crate::StorageKey::AssetAccruals;
 
 mod auth;
 mod burn;
@@ -16,6 +18,8 @@ mod record;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
 const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
+
+pub(crate) type AccrualsMap = UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>;
 
 /// The main structure representing a smart contract for managing fungible tokens.
 #[near_bindgen]
@@ -65,7 +69,7 @@ pub struct Contract {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
+    accruals: UnorderedMap<Asset, AccrualsMap>,
 
     /// A map containing accrual and service details for each user account.
     ///
@@ -88,6 +92,7 @@ enum StorageKey {
     Accruals,
     AccrualsEntry(u32),
     Oracles,
+    AssetAccruals(Asset),
 }
 
 #[near_bindgen]
@@ -96,11 +101,19 @@ impl InitApi for Contract {
     fn init(token_account_id: AccountId) -> Self {
         Self::assert_private();
 
+        let mut accruals = UnorderedMap::new(StorageKey::Accruals);
+        accruals.insert(
+            "SWEAT".to_string(),
+            UnorderedMap::<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>::new(AssetAccruals(
+                "SWEAT".to_string(),
+            )),
+        );
+
         Self {
             token_account_id,
+            accruals,
 
             accounts: LookupMap::new(StorageKey::Accounts),
-            accruals: UnorderedMap::new(StorageKey::Accruals),
             oracles: UnorderedSet::new(StorageKey::Oracles),
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,

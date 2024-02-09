@@ -3,7 +3,7 @@ use model::{
     api::RecordApi,
     event::{emit, EventKind, RecordData},
 };
-use near_sdk::{json_types::U128, near_bindgen, require, store::Vector, AccountId};
+use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
 
@@ -31,24 +31,24 @@ impl RecordApi for Contract {
             balances.push(amount);
 
             if let Some(record) = self.accounts.get_mut(&account_id) {
-                record.accruals.push((now_seconds, index));
+                record.get_sweat_accruals_unsafe_mut().push((now_seconds, index));
             } else {
-                let record = AccountRecord {
-                    accruals: vec![(now_seconds, index)],
-                    ..AccountRecord::new(now_seconds)
-                };
+                let mut record = AccountRecord::new(now_seconds, None);
+                record.get_sweat_accruals_unsafe_mut().push((now_seconds, index));
 
                 self.accounts.insert(account_id, record);
             }
         }
 
-        let existing = self.accruals.insert(now_seconds, (balances, total_balance));
+        let sweat_accruals = self.get_sweat_accruals_unsafe_mut();
+        if sweat_accruals.contains_key(&now_seconds) {
+            let current_accruals = sweat_accruals.get_mut(&now_seconds).unwrap();
+            current_accruals.0.extend(balances.iter().cloned());
+            current_accruals.1 += total_balance;
+        } else {
+            sweat_accruals.insert(now_seconds, (balances, total_balance));
+        }
 
         emit(EventKind::Record(event_data));
-
-        require!(
-            existing.is_none(),
-            format!("Record for this timestamp: {now_seconds} already existed. It was overwritten.")
-        );
     }
 }
