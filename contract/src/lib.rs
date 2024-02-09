@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use model::{account_record::AccountRecord, api::InitApi, Asset, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
@@ -12,6 +14,7 @@ mod claim;
 mod clean;
 mod common;
 mod config;
+mod receiver;
 mod record;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
@@ -21,7 +24,7 @@ const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    token_account_ids: LookupMap<Asset, AccountId>,
+    token_account_ids: HashMap<Asset, AccountId>,
 
     /// A set of account IDs authorized to perform sensitive operations within the contract.
     ///
@@ -86,7 +89,6 @@ enum StorageKey {
     Accruals,
     AccrualsEntry(u32),
     Oracles,
-    TokenAccounts,
 }
 
 #[near_bindgen]
@@ -95,7 +97,7 @@ impl InitApi for Contract {
     fn init(default_token: (Asset, AccountId)) -> Self {
         Self::assert_private();
 
-        let mut token_account_ids = LookupMap::new(StorageKey::TokenAccounts);
+        let mut token_account_ids = HashMap::new();
         token_account_ids.insert(default_token.0.clone(), default_token.1);
 
         Self {
@@ -119,5 +121,9 @@ impl InitApi for Contract {
 impl Contract {
     pub fn register_token(&mut self, symbol: Asset, account_id: AccountId) {
         self.token_account_ids.insert(symbol, account_id);
+    }
+
+    pub fn get_tokens(&self) -> HashMap<Asset, AccountId> {
+        self.token_account_ids.clone()
     }
 }

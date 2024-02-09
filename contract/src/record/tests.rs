@@ -41,8 +41,24 @@ fn record_by_oracle() {
 }
 
 #[test]
-#[should_panic(expected = "Unauthorized access! Only oracle can do this!")]
-fn record_by_not_oracle() {
+fn record_by_owner() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    let alice_balance_1 = 1_000_000;
+
+    context.switch_account(&accounts.oracle);
+    contract.register_token("ALICE".to_string(), accounts.alice.clone());
+
+    context.switch_account(&accounts.alice);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance_1))], None);
+
+    let alice_actual_balance = contract.get_claimable_balance_for_account(accounts.alice.clone(), None);
+    assert_eq!(alice_balance_1, alice_actual_balance.0);
+}
+
+#[test]
+#[should_panic(expected = "Unauthorized access! Only oracle or registered token owner can do this!")]
+fn record_by_not_oracle_or_token_owner() {
     let (_context, mut contract, accounts) = Context::init_with_oracle();
 
     let alice_balance_1 = 1_000_000;

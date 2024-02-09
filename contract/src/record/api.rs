@@ -12,7 +12,7 @@ use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntr
 impl RecordApi for Contract {
     #[payable]
     fn record_batch_for_hold(&mut self, amounts: BatchedAccruals, asset: Option<Asset>) {
-        self.assert_oracle();
+        self.assert_oracle_or_registered_token_contract();
 
         let asset = asset.unwrap_or("SWEAT".to_string());
 
