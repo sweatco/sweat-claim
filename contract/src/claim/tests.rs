@@ -1,6 +1,9 @@
 #![cfg(test)]
 
-use model::{api::{ClaimApi, RecordApi}, ClaimAvailabilityView, UnixTimestamp};
+use model::{
+    api::{ClaimApi, RecordApi},
+    ClaimAvailabilityView, UnixTimestamp,
+};
 use near_sdk::{json_types::U128, PromiseOrValue};
 
 use crate::{

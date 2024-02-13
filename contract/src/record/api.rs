@@ -13,22 +13,26 @@ impl RecordApi for Contract {
         self.assert_oracle();
 
         let now_seconds = now_seconds();
-        let mut balances = Vector::new(AccrualsEntry(now_seconds));
-        let mut total_balance = 0;
-
         let mut event_data = RecordData {
             timestamp: now_seconds,
             amounts: vec![],
         };
 
+        if !self.accruals.contains_key(&now_seconds) {
+            self.accruals
+                .insert(now_seconds, (Vector::new(AccrualsEntry(now_seconds)), 0));
+        }
+
+        let balances = self.accruals.get_mut(&now_seconds).unwrap();
+
         for (account_id, amount) in amounts {
             event_data.amounts.push((account_id.clone(), amount));
 
             let amount = amount.0;
-            let index = balances.len();
+            let index = balances.0.len();
 
-            total_balance += amount;
-            balances.push(amount);
+            balances.1 += amount;
+            balances.0.push(amount);
 
             if let Some(record) = self.accounts.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
@@ -40,14 +44,6 @@ impl RecordApi for Contract {
 
                 self.accounts.insert(account_id, record);
             }
-        }
-
-        if self.accruals.contains_key(&now_seconds) {
-            let current_accruals = self.accruals.get_mut(&now_seconds).unwrap();
-            current_accruals.0.extend(balances.iter().cloned());
-            current_accruals.1 += total_balance;
-        } else {
-            self.accruals.insert(now_seconds, (balances, total_balance));
         }
 
         emit(EventKind::Record(event_data));
