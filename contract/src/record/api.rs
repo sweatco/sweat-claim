@@ -1,11 +1,13 @@
 use model::{
     account_record::AccountRecord,
     api::RecordApi,
-    event::{emit, EventKind, RecordData},
+    event::{emit, BatchedRecordData, EventKind, RecordData},
 };
 use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
+
+const RECORD_EVENT_BATCH_SIZE: usize = 100;
 
 #[near_bindgen]
 impl RecordApi for Contract {
@@ -13,10 +15,7 @@ impl RecordApi for Contract {
         self.assert_oracle();
 
         let now_seconds = now_seconds();
-        let mut event_data = RecordData {
-            timestamp: now_seconds,
-            amounts: vec![],
-        };
+        let mut batched_event_data = vec![RecordData::new(now_seconds)];
 
         if !self.accruals.contains_key(&now_seconds) {
             self.accruals
@@ -26,7 +25,7 @@ impl RecordApi for Contract {
         let balances = self.accruals.get_mut(&now_seconds).unwrap();
 
         for (account_id, amount) in amounts {
-            event_data.amounts.push((account_id.clone(), amount));
+            batched_event_data.push_amount((account_id.clone(), amount), now_seconds, RECORD_EVENT_BATCH_SIZE);
 
             let amount = amount.0;
             let index = balances.0.len();
@@ -46,6 +45,8 @@ impl RecordApi for Contract {
             }
         }
 
-        emit(EventKind::Record(event_data));
+        for event_data in batched_event_data {
+            emit(EventKind::Record(event_data));
+        }
     }
 }

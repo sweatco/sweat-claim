@@ -52,6 +52,29 @@ pub struct RecordData {
     pub amounts: Vec<(AccountId, U128)>,
 }
 
+impl RecordData {
+    pub fn new(timestamp: UnixTimestamp) -> Self {
+        Self {
+            timestamp,
+            amounts: vec![],
+        }
+    }
+}
+
+pub trait BatchedRecordData {
+    fn push_amount(&mut self, amount: (AccountId, U128), now_seconds: UnixTimestamp, batch_size: usize);
+}
+
+impl BatchedRecordData for Vec<RecordData> {
+    fn push_amount(&mut self, amount: (AccountId, U128), now_seconds: UnixTimestamp, batch_size: usize) {
+        let event_data = self.last_mut().expect("Event data is not found");
+        event_data.amounts.push(amount);
+        if event_data.amounts.len() == batch_size {
+            self.push(RecordData::new(now_seconds));
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "near_sdk::serde", rename_all = "snake_case")]
 struct SweatClaimEvent {
