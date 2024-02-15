@@ -1,11 +1,13 @@
 use model::{
     account_record::AccountRecord,
     api::RecordApi,
-    event::{emit, EventKind, RecordData},
+    event::{BatchedEmitData, RecordData},
 };
-use near_sdk::{json_types::U128, near_bindgen, require, store::Vector, AccountId};
+use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
+
+const RECORD_EVENT_BATCH_SIZE: usize = 100;
 
 #[near_bindgen]
 impl RecordApi for Contract {
@@ -13,22 +15,21 @@ impl RecordApi for Contract {
         self.assert_oracle();
 
         let now_seconds = now_seconds();
-        let mut balances = Vector::new(AccrualsEntry(now_seconds));
-        let mut total_balance = 0;
+        let mut event_data = RecordData::new(now_seconds);
 
-        let mut event_data = RecordData {
-            timestamp: now_seconds,
-            amounts: vec![],
-        };
+        let balances = self
+            .accruals
+            .entry(now_seconds)
+            .or_insert_with(|| (Vector::new(AccrualsEntry(now_seconds)), 0));
 
         for (account_id, amount) in amounts {
             event_data.amounts.push((account_id.clone(), amount));
 
             let amount = amount.0;
-            let index = balances.len();
+            let index = balances.0.len();
 
-            total_balance += amount;
-            balances.push(amount);
+            balances.1 += amount;
+            balances.0.push(amount);
 
             if let Some(record) = self.accounts.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
@@ -42,13 +43,6 @@ impl RecordApi for Contract {
             }
         }
 
-        let existing = self.accruals.insert(now_seconds, (balances, total_balance));
-
-        emit(EventKind::Record(event_data));
-
-        require!(
-            existing.is_none(),
-            format!("Record for this timestamp: {now_seconds} already existed. It was overwritten.")
-        );
+        event_data.emit_batched(RECORD_EVENT_BATCH_SIZE);
     }
 }

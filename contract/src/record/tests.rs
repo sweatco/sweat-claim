@@ -1,7 +1,7 @@
 #![cfg(test)]
 
-use model::api::{ClaimApi, RecordApi};
-use near_sdk::json_types::U128;
+use model::api::{ClaimApi, ConfigApi, RecordApi};
+use near_sdk::{json_types::U128, AccountId};
 
 use crate::common::tests::Context;
 
@@ -44,11 +44,28 @@ fn record_by_not_oracle() {
 }
 
 #[test]
-#[should_panic(expected = "Record for this timestamp: 0 already existed. It was overwritten.")]
-fn test_record() {
+fn test_multiple_records_in_the_same_block() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
 
+    let target_accruals = [10, 20];
+    let target_accounts = [accounts.alice.clone(), accounts.bob.clone()];
+    let batches: Vec<Vec<(AccountId, U128)>> = (0..target_accruals.len())
+        .map(|index| vec![(target_accounts[index].clone(), target_accruals[index].into())])
+        .collect();
+
     context.switch_account(&accounts.oracle);
-    contract.record_batch_for_hold(vec![(accounts.alice.clone(), 10.into())]);
-    contract.record_batch_for_hold(vec![(accounts.alice, 10.into())]);
+    contract.record_batch_for_hold(batches.get(0).unwrap().clone());
+    contract.record_batch_for_hold(batches.get(1).unwrap().clone());
+
+    let accruals = contract.accruals.get(&0).unwrap();
+    assert_eq!(accruals.0.len(), target_accruals.len() as u32);
+    assert_eq!(accruals.1, target_accruals.iter().sum::<u128>());
+
+    contract.set_claim_period(0);
+
+    for index in 0..target_accruals.len() {
+        let account = target_accounts.get(index).unwrap();
+        let balance = contract.get_claimable_balance_for_account(account.clone());
+        assert_eq!(balance.0, target_accruals.get(index).unwrap().clone());
+    }
 }
