@@ -61,16 +61,17 @@ impl RecordData {
     }
 }
 
-pub trait BatchedRecordData {
-    fn push_amount(&mut self, amount: (AccountId, U128), now_seconds: UnixTimestamp, batch_size: usize);
+pub trait BatchedEmitData {
+    fn emit_batched(self, batch_size: usize);
 }
 
-impl BatchedRecordData for Vec<RecordData> {
-    fn push_amount(&mut self, amount: (AccountId, U128), now_seconds: UnixTimestamp, batch_size: usize) {
-        let event_data = self.last_mut().expect("Event data is not found");
-        event_data.amounts.push(amount);
-        if event_data.amounts.len() == batch_size {
-            self.push(RecordData::new(now_seconds));
+impl BatchedEmitData for RecordData {
+    fn emit_batched(self, batch_size: usize) {
+        for batch in self.amounts.chunks(batch_size) {
+            emit(EventKind::Record(RecordData {
+                timestamp: self.timestamp,
+                amounts: batch.to_vec(),
+            }));
         }
     }
 }
