@@ -1,4 +1,4 @@
-use model::{
+use claim_model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
     ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
@@ -145,7 +145,7 @@ impl Contract {
 
 #[cfg(not(test))]
 mod prod {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use claim_model::{ClaimResultView, TokensAmount, UnixTimestamp};
     use near_sdk::{
         env, ext_contract, is_promise_success, near_bindgen, serde_json::json, AccountId, Gas, Promise, PromiseOrValue,
     };
@@ -208,7 +208,7 @@ mod prod {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use claim_model::{ClaimResultView, TokensAmount, UnixTimestamp};
     use near_sdk::{AccountId, PromiseOrValue};
 
     use crate::{common::tests::data::get_test_future_success, Contract};

@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use model::{
+use claim_model::{
     api::{ClaimApi, RecordApi},
     ClaimAvailabilityView, UnixTimestamp,
 };

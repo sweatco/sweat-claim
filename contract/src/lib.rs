@@ -1,4 +1,4 @@
-use model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
+use claim_model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,

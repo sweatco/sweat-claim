@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use model::api::AuthApi;
+use claim_model::api::AuthApi;
 
 use crate::common::tests::Context;
 

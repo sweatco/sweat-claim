@@ -1,4 +1,4 @@
-use model::{
+use claim_model::{
     account_record::AccountRecord,
     api::RecordApi,
     event::{BatchedEmitData, RecordData},
