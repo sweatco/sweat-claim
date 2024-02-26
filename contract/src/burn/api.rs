@@ -5,7 +5,10 @@ use model::{
 };
 use near_sdk::{json_types::U128, near_bindgen, require, PromiseOrValue};
 
-use crate::{common::now_seconds, Contract, ContractExt};
+use crate::{
+    common::{now_seconds, UnixTimestampExtension},
+    Contract, ContractExt,
+};
 
 #[near_bindgen]
 impl BurnApi for Contract {
@@ -21,7 +24,7 @@ impl BurnApi for Contract {
         let now = now_seconds();
 
         for (datetime, (_, total)) in self.accruals.iter() {
-            if now - datetime >= self.burn_period {
+            if !datetime.is_within_period(now, self.burn_period) {
                 keys_to_remove.push(*datetime);
                 total_to_burn += total;
             }

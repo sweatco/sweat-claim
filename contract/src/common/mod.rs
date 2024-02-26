@@ -1,4 +1,4 @@
-use model::UnixTimestamp;
+use model::{Duration, UnixTimestamp};
 use near_sdk::env::{block_timestamp_ms, panic_str};
 
 mod asserts;
@@ -11,6 +11,16 @@ fn ms_timestamp_to_seconds(ms: u64) -> UnixTimestamp {
 
 pub(crate) fn now_seconds() -> UnixTimestamp {
     ms_timestamp_to_seconds(block_timestamp_ms())
+}
+
+pub(crate) trait UnixTimestampExtension {
+    fn is_within_period(&self, now: UnixTimestamp, period: Duration) -> bool;
+}
+
+impl UnixTimestampExtension for UnixTimestamp {
+    fn is_within_period(&self, now: UnixTimestamp, period: Duration) -> bool {
+        now - self < period
+    }
 }
 
 #[test]

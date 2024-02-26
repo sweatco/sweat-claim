@@ -5,7 +5,11 @@ use model::{
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
-use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
+use crate::{
+    common::{now_seconds, UnixTimestampExtension},
+    Contract, ContractExt,
+    StorageKey::AccrualsEntry,
+};
 
 #[near_bindgen]
 impl ClaimApi for Contract {
@@ -18,7 +22,7 @@ impl ClaimApi for Contract {
         let now = now_seconds();
 
         for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
+            if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
@@ -65,7 +69,7 @@ impl ClaimApi for Contract {
         let mut details = vec![];
 
         for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
+            if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
