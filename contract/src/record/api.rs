@@ -1,13 +1,11 @@
 use model::{
     account_record::AccountRecord,
     api::RecordApi,
-    event::{BatchedEmitData, RecordData},
+    event::{emit, EventKind::Record, RecordData},
 };
 use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
-
-const RECORD_EVENT_BATCH_SIZE: usize = 100;
 
 #[near_bindgen]
 impl RecordApi for Contract {
@@ -43,6 +41,6 @@ impl RecordApi for Contract {
             }
         }
 
-        event_data.emit_batched(RECORD_EVENT_BATCH_SIZE);
+        emit(Record(event_data));
     }
 }
