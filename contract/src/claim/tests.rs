@@ -134,6 +134,23 @@ fn test_claim_when_user_has_tokens_and_claim_period_is_not_passed() {
 }
 
 #[test]
+fn test_claim_when_user_has_tokens_and_current_time_matches_claim_period() {
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    let alice_balance = 500_000;
+    context.switch_account(&accounts.oracle);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance))]);
+
+    context.set_block_timestamp_in_seconds(contract.burn_period as u64);
+
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice.clone()).0;
+    assert_eq!(0, alice_new_balance);
+
+    let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available);
+}
+
+#[test]
 fn test_claim_when_user_has_tokens_and_claim_period_is_passed() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
     set_test_future_success(EXT_TRANSFER_FUTURE, true);
