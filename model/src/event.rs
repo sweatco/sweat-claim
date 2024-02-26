@@ -12,12 +12,11 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
     content = "data",
     rename_all = "snake_case"
 )]
-pub enum EventKind<'a> {
+pub enum EventKind {
     Burn(BurnData),
     Claim(ClaimData),
     Clean(CleanData),
     Record(RecordData),
-    RecordChunk(RecordChunk<'a>),
 }
 
 #[derive(Serialize, Debug)]
@@ -47,13 +46,6 @@ pub struct RecordData {
     pub amounts: Vec<(AccountId, U128)>,
 }
 
-#[derive(Serialize, Debug)]
-#[serde(crate = "near_sdk::serde")]
-pub struct RecordChunk<'a> {
-    pub timestamp: UnixTimestamp,
-    pub amounts: &'a [(AccountId, U128)],
-}
-
 impl RecordData {
     pub fn new(timestamp: UnixTimestamp) -> Self {
         Self {
@@ -63,37 +55,17 @@ impl RecordData {
     }
 }
 
-pub trait BatchedEmitData {
-    fn emit_batched(self, batch_size: usize);
-}
-
-impl BatchedEmitData for RecordData {
-    fn emit_batched(self, batch_size: usize) {
-        if self.amounts.len() <= batch_size {
-            emit(EventKind::Record(self));
-            return;
-        }
-
-        for amounts in self.amounts.chunks(batch_size) {
-            emit(EventKind::RecordChunk(RecordChunk {
-                timestamp: self.timestamp,
-                amounts,
-            }));
-        }
-    }
-}
-
 #[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde", rename_all = "snake_case")]
-struct SweatClaimEvent<'a> {
+struct SweatClaimEvent {
     standard: &'static str,
     version: &'static str,
     #[serde(flatten)]
-    event_kind: EventKind<'a>,
+    event_kind: EventKind,
 }
 
-impl<'a> From<EventKind<'a>> for SweatClaimEvent<'a> {
-    fn from(event_kind: EventKind<'a>) -> Self {
+impl From<EventKind> for SweatClaimEvent {
+    fn from(event_kind: EventKind) -> Self {
         Self {
             standard: PACKAGE_NAME,
             version: VERSION,
@@ -106,7 +78,7 @@ pub fn emit(event: EventKind) {
     log!(SweatClaimEvent::from(event).to_json_event_string());
 }
 
-impl SweatClaimEvent<'_> {
+impl SweatClaimEvent {
     fn to_json_string(&self) -> String {
         serde_json::to_string_pretty(self)
             .unwrap_or_else(|err| env::panic_str(&format!("Failed to serialize SweatClaimEvent: {err}")))
