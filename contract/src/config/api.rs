@@ -1,4 +1,4 @@
-use model::{api::ConfigApi, Duration};
+use claim_model::{api::ConfigApi, Duration};
 use near_sdk::near_bindgen;
 
 use crate::{Contract, ContractExt};

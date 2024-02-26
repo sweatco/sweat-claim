@@ -7,7 +7,11 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+integration-test = []
+
 [dependencies]
 near-sdk = { workspace = true }
 
-model = { workspace = true }
+claim-model = { workspace = true }

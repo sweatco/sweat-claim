@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use model::api::RecordApi;
+use claim_model::api::RecordApi;
 use near_sdk::json_types::U128;
 
 use crate::{clean::api::CleanApi, common::tests::Context};

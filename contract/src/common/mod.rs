@@ -1,4 +1,4 @@
-use model::UnixTimestamp;
+use claim_model::UnixTimestamp;
 use near_sdk::env::{block_timestamp_ms, panic_str};
 
 mod asserts;
