@@ -1,4 +1,4 @@
-use model::{
+use claim_model::{
     api::BurnApi,
     event::{emit, BurnData, EventKind},
     TokensAmount, UnixTimestamp,
@@ -64,7 +64,7 @@ impl Contract {
 
 #[cfg(not(test))]
 pub(crate) mod prod {
-    use model::{TokensAmount, UnixTimestamp};
+    use claim_model::{TokensAmount, UnixTimestamp};
     use near_sdk::{
         env, ext_contract, is_promise_success, json_types::U128, near_bindgen, serde_json::json, Gas, Promise,
         PromiseOrValue,
@@ -112,7 +112,7 @@ pub(crate) mod prod {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use model::{TokensAmount, UnixTimestamp};
+    use claim_model::{TokensAmount, UnixTimestamp};
     use near_sdk::{json_types::U128, PromiseOrValue};
 
     use crate::{common::tests::data::get_test_future_success, Contract};

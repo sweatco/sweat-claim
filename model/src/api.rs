@@ -3,6 +3,12 @@ use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
 use crate::{ClaimAvailabilityView, ClaimResultView, Duration};
 
+#[cfg(feature = "integration-test")]
+pub struct ClaimContract<'a> {
+    pub contract: &'a near_workspaces::Contract,
+}
+
+
 /// An API for initializing smart contracts in the context of fungible token operations.
 ///
 /// This API provides a method to initialize the smart contract, primarily for interactions
