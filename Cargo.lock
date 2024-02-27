@@ -636,6 +636,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "claim-model"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "integration-trait",
+ "integration-utils",
+ "near-sdk",
+ "near-workspaces",
+]
+
+[[package]]
 name = "clap"
 version = "3.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1678,15 +1690,14 @@ dependencies = [
  "anyhow",
  "async-trait",
  "borsh 1.3.1",
+ "claim-model",
  "integration-utils",
  "maplit",
- "model",
  "near-contract-standards",
  "near-sdk",
  "near-units",
  "near-workspaces",
  "pkg-config",
- "sweat-integration",
  "sweat-model",
  "tokio",
  "tracing",
@@ -1696,7 +1707,7 @@ dependencies = [
 [[package]]
 name = "integration-trait"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/integration-utils.git?rev=c30efebede6a3e40111c3be95e89564fe2698db1#c30efebede6a3e40111c3be95e89564fe2698db1"
+source = "git+https://github.com/sweatco/integration-utils.git?rev=e54dc392ef42837123dd2c0ad19b6d6b815192d7#e54dc392ef42837123dd2c0ad19b6d6b815192d7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1706,7 +1717,7 @@ dependencies = [
 [[package]]
 name = "integration-utils"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/integration-utils.git?rev=c30efebede6a3e40111c3be95e89564fe2698db1#c30efebede6a3e40111c3be95e89564fe2698db1"
+source = "git+https://github.com/sweatco/integration-utils.git?rev=e54dc392ef42837123dd2c0ad19b6d6b815192d7#e54dc392ef42837123dd2c0ad19b6d6b815192d7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1939,17 +1950,6 @@ dependencies = [
  "libc",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "model"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "integration-trait",
- "integration-utils",
- "near-sdk",
 ]
 
 [[package]]
@@ -3841,24 +3841,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 
 [[package]]
-name = "sweat-integration"
-version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=182ad20facd8577a28bf778b59b4746f7b2ea7b8#182ad20facd8577a28bf778b59b4746f7b2ea7b8"
-dependencies = [
- "anyhow",
- "async-trait",
- "integration-utils",
- "near-contract-standards",
- "near-sdk",
- "near-units",
- "near-workspaces",
- "sweat-model",
-]
-
-[[package]]
 name = "sweat-model"
 version = "0.1.0"
-source = "git+https://github.com/sweatco/sweat-near?rev=182ad20facd8577a28bf778b59b4746f7b2ea7b8#182ad20facd8577a28bf778b59b4746f7b2ea7b8"
+source = "git+https://github.com/sweatco/sweat-near?rev=bb9acde42fd6ef4f3e4c2a69d4ade8503df40f4a#bb9acde42fd6ef4f3e4c2a69d4ade8503df40f4a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3866,13 +3851,14 @@ dependencies = [
  "integration-utils",
  "near-contract-standards",
  "near-sdk",
+ "near-workspaces",
 ]
 
 [[package]]
 name = "sweat_claim"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
- "model",
+ "claim-model",
  "near-sdk",
 ]
 

@@ -1,4 +1,4 @@
-use model::api::AuthApi;
+use claim_model::api::AuthApi;
 use near_sdk::{env::log_str, near_bindgen, require, AccountId};
 
 use crate::{Contract, ContractExt};

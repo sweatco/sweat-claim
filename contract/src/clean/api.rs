@@ -1,4 +1,4 @@
-use model::event::{emit, CleanData, EventKind};
+use claim_model::event::{emit, CleanData, EventKind};
 use near_sdk::{near_bindgen, AccountId};
 
 use crate::{Contract, ContractExt};

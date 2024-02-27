@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use model::api::InitApi;
+use claim_model::api::InitApi;
 use near_sdk::{test_utils::VMContextBuilder, testing_env, AccountId};
 
 use crate::Contract;

@@ -1,17 +1,11 @@
-use near_sdk::{
-    env,
-    json_types::U128,
-    log,
-    serde::{Deserialize, Serialize},
-    serde_json, AccountId,
-};
+use near_sdk::{env, json_types::U128, log, serde::Serialize, serde_json, AccountId};
 
 use crate::UnixTimestamp;
 
 pub const PACKAGE_NAME: &str = "sweat_claim";
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(
     crate = "near_sdk::serde",
     tag = "event",
@@ -25,13 +19,13 @@ pub enum EventKind {
     Record(RecordData),
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct BurnData {
     pub burnt_amount: U128,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ClaimData {
     pub account_id: AccountId,
@@ -39,20 +33,29 @@ pub struct ClaimData {
     pub total_claimed: U128,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct CleanData {
     pub account_ids: Vec<AccountId>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct RecordData {
     pub timestamp: UnixTimestamp,
     pub amounts: Vec<(AccountId, U128)>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+impl RecordData {
+    pub fn new(timestamp: UnixTimestamp) -> Self {
+        Self {
+            timestamp,
+            amounts: vec![],
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
 #[serde(crate = "near_sdk::serde", rename_all = "snake_case")]
 struct SweatClaimEvent {
     standard: &'static str,

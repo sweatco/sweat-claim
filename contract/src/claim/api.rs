@@ -1,11 +1,15 @@
-use model::{
+use claim_model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
     ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
 
-use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
+use crate::{
+    common::{now_seconds, UnixTimestampExtension},
+    Contract, ContractExt,
+    StorageKey::AccrualsEntry,
+};
 
 #[near_bindgen]
 impl ClaimApi for Contract {
@@ -18,7 +22,7 @@ impl ClaimApi for Contract {
         let now = now_seconds();
 
         for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
+            if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
@@ -65,7 +69,7 @@ impl ClaimApi for Contract {
         let mut details = vec![];
 
         for (datetime, index) in &account_data.accruals {
-            if now - datetime > self.burn_period {
+            if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
@@ -141,7 +145,7 @@ impl Contract {
 
 #[cfg(not(test))]
 mod prod {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use claim_model::{ClaimResultView, TokensAmount, UnixTimestamp};
     use near_sdk::{
         env, ext_contract, is_promise_success, near_bindgen, serde_json::json, AccountId, Gas, Promise, PromiseOrValue,
     };
@@ -204,7 +208,7 @@ mod prod {
 
 #[cfg(test)]
 pub(crate) mod test {
-    use model::{ClaimResultView, TokensAmount, UnixTimestamp};
+    use claim_model::{ClaimResultView, TokensAmount, UnixTimestamp};
     use near_sdk::{AccountId, PromiseOrValue};
 
     use crate::{common::tests::data::get_test_future_success, Contract};

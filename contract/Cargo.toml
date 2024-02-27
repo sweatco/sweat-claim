@@ -1,13 +1,17 @@
 [package]
 name = "sweat_claim"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Sweat Economy"]
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+integration-test = []
+
 [dependencies]
 near-sdk = { workspace = true }
 
-model = { workspace = true }
+claim-model = { workspace = true }
