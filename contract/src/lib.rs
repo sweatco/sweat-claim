@@ -1,4 +1,6 @@
-use claim_model::{account_record::AccountRecord, api::InitApi, Duration, TokensAmount, UnixTimestamp};
+use claim_model::{
+    account_record::AccountRecord, api::InitApi, AccrualsMap, Asset, Duration, TokensAmount, UnixTimestamp,
+};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
@@ -12,6 +14,7 @@ mod claim;
 mod clean;
 mod common;
 mod config;
+mod migration;
 mod record;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
@@ -26,6 +29,7 @@ pub struct Contract {
     /// This field specifies the associated fungible token contract with which this smart
     /// contract interacts.
     token_account_id: AccountId,
+    assets: UnorderedMap<Asset, AccountId>,
 
     /// A set of account IDs authorized to perform sensitive operations within the contract.
     ///
@@ -65,7 +69,8 @@ pub struct Contract {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    accruals: UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>,
+    accruals: AccrualsMap,
+    extra_accruals: LookupMap<Asset, AccrualsMap>,
 
     /// A map containing accrual and service details for each user account.
     ///
@@ -83,11 +88,14 @@ pub struct Contract {
 }
 
 #[derive(BorshStorageKey, BorshSerialize)]
-enum StorageKey {
+pub(crate) enum StorageKey {
     Accounts,
     Accruals,
     AccrualsEntry(u32),
     Oracles,
+    Assets,
+    ExtraAccruals(),
+    ExtraAccrualsEntry(Asset),
 }
 
 #[near_bindgen]
@@ -98,9 +106,11 @@ impl InitApi for Contract {
 
         Self {
             token_account_id,
+            assets: UnorderedMap::new(StorageKey::Assets),
 
             accounts: LookupMap::new(StorageKey::Accounts),
             accruals: UnorderedMap::new(StorageKey::Accruals),
+            extra_accruals: LookupMap::new(StorageKey::ExtraAccruals()),
             oracles: UnorderedSet::new(StorageKey::Oracles),
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,
