@@ -1,15 +1,20 @@
 use claim_model::{
     api::RecordApi,
     event::{emit, EventKind::Record, RecordData},
+    Asset,
 };
-use near_sdk::{AccountId, json_types::U128, near_bindgen, store::Vector};
+use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
 
-use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
-use crate::record::model::legacy::AccountRecordLegacy;
+use crate::{
+    common::now_seconds,
+    record::model::{legacy::AccountRecordLegacy, versioned::AccountRecord},
+    Contract, ContractExt,
+    StorageKey::AccrualsEntry,
+};
 
 #[near_bindgen]
 impl RecordApi for Contract {
-    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>) {
+    fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<Asset>) {
         self.assert_oracle();
 
         let now_seconds = now_seconds();
@@ -32,12 +37,12 @@ impl RecordApi for Contract {
             if let Some(record) = self.accounts_legacy.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
             } else {
-                let record = AccountRecordLegacy {
+                let record = AccountRecord {
                     accruals: vec![(now_seconds, index)],
-                    ..AccountRecordLegacy::new(now_seconds)
+                    ..AccountRecord::new(now_seconds)
                 };
 
-                self.accounts_legacy.insert(account_id, record);
+                self.accounts.insert(account_id, record.into_versioned());
             }
         }
 

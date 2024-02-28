@@ -59,7 +59,10 @@ impl ClaimApi for Contract {
             "Claim is not available at the moment"
         );
 
-        let account_data = self.accounts_legacy.get_mut(&account_id).expect("Account data is not found");
+        let account_data = self
+            .accounts_legacy
+            .get_mut(&account_id)
+            .expect("Account data is not found");
         require!(!account_data.is_locked, "Another operation is running");
 
         account_data.is_locked = true;

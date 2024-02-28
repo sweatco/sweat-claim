@@ -7,7 +7,7 @@ pub(crate) enum AccountRecordVersioned {
     V1(AccountRecordV1),
 }
 
-type AccountRecord = AccountRecordV1;
+pub(crate) type AccountRecord = AccountRecordV1;
 
 impl AccountRecord {
     pub fn into_versioned(self) -> AccountRecordVersioned {

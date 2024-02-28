@@ -1,13 +1,14 @@
 #![cfg(test)]
 
 use std::future::IntoFuture;
+
 use anyhow::Result;
+use claim_model::api::RecordApiIntegration;
 use integration_utils::measure::{
     measure::scoped_command_measure,
     outcome_storage::OutcomeStorage,
     utils::{pretty_gas_string, values_diff},
 };
-use claim_model::api::RecordApiIntegration;
 use near_sdk::{json_types::U128, AccountId};
 use near_workspaces::types::Gas;
 
@@ -76,8 +77,8 @@ async fn measure_record_batch_for_hold(count: usize) -> Result<Gas> {
         context
             .sweat_claim()
             .record_batch_for_hold(records)
-            .with_user(&oracle).into_future()
-            ,
+            .with_user(&oracle)
+            .into_future(),
     )
     .await?;
 

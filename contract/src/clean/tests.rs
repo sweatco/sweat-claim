@@ -10,7 +10,7 @@ fn test_clean_single_account_by_oracle() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
     context.switch_account(&accounts.oracle);
 
-    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(100_000_000))]);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(100_000_000))], None);
 
     let record = contract.accounts_legacy.get(&accounts.alice);
     assert!(record.is_some());
@@ -28,7 +28,7 @@ fn test_clean_single_account_by_not_oracle() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
     context.switch_account(&accounts.oracle);
 
-    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(100_000_000))]);
+    contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(100_000_000))], None);
 
     let record = contract.accounts_legacy.get(&accounts.alice);
     assert!(record.is_some());
@@ -43,10 +43,13 @@ fn test_clean_multiple_accounts_by_oracle() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
     context.switch_account(&accounts.oracle);
 
-    contract.record_batch_for_hold(vec![
-        (accounts.alice.clone(), U128(100_000_000)),
-        (accounts.bob.clone(), U128(1_000_000_000)),
-    ]);
+    contract.record_batch_for_hold(
+        vec![
+            (accounts.alice.clone(), U128(100_000_000)),
+            (accounts.bob.clone(), U128(1_000_000_000)),
+        ],
+        None,
+    );
 
     let alice_record = contract.accounts_legacy.get(&accounts.alice);
     assert!(alice_record.is_some());

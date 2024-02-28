@@ -1,8 +1,8 @@
+use claim_model::{AccrualIndex, UnixTimestamp};
 use near_sdk::{
     borsh,
     borsh::{BorshDeserialize, BorshSerialize},
 };
-use claim_model::{AccrualIndex, UnixTimestamp};
 
 /// Represents the state of a registered account in the smart contract.
 ///

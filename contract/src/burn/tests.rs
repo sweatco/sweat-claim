@@ -17,10 +17,13 @@ fn test_burn_when_outdated_tokens_exist() {
     let bob_balance = 200_000;
 
     context.switch_account(&accounts.oracle);
-    contract.record_batch_for_hold(vec![
-        (accounts.alice.clone(), U128(alice_balance)),
-        (accounts.bob.clone(), U128(bob_balance)),
-    ]);
+    contract.record_batch_for_hold(
+        vec![
+            (accounts.alice.clone(), U128(alice_balance)),
+            (accounts.bob.clone(), U128(bob_balance)),
+        ],
+        None,
+    );
 
     context.set_block_timestamp_in_seconds(contract.burn_period as u64 + 100);
 
@@ -50,10 +53,13 @@ fn test_ext_error_on_burn_when_outdated_tokens_exist() {
     let bob_balance = 200_000;
 
     context.switch_account(&accounts.oracle);
-    contract.record_batch_for_hold(vec![
-        (accounts.alice.clone(), U128(alice_balance)),
-        (accounts.bob.clone(), U128(bob_balance)),
-    ]);
+    contract.record_batch_for_hold(
+        vec![
+            (accounts.alice.clone(), U128(alice_balance)),
+            (accounts.bob.clone(), U128(bob_balance)),
+        ],
+        None,
+    );
 
     context.set_block_timestamp_in_seconds(contract.burn_period as u64 + 100);
 
@@ -83,10 +89,13 @@ fn test_burn_when_outdated_tokens_don_not_exist() {
     let bob_balance = 300_000;
 
     context.switch_account(&accounts.oracle);
-    contract.record_batch_for_hold(vec![
-        (accounts.alice.clone(), U128(alice_balance)),
-        (accounts.bob.clone(), U128(bob_balance)),
-    ]);
+    contract.record_batch_for_hold(
+        vec![
+            (accounts.alice.clone(), U128(alice_balance)),
+            (accounts.bob.clone(), U128(bob_balance)),
+        ],
+        None,
+    );
 
     let burn_result = contract.burn();
     let burnt_amount = match burn_result {
