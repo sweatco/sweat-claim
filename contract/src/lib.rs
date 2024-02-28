@@ -1,13 +1,12 @@
-use claim_model::{
-    account_record::AccountRecord, api::InitApi, AccrualsMap, Asset, Duration, TokensAmount, UnixTimestamp,
-};
+use claim_model::{account_record::AccountRecord, api::InitApi, AccrualsMap, Asset, Duration};
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
-    store::{LookupMap, UnorderedMap, UnorderedSet, Vector},
+    store::{LookupMap, UnorderedMap, UnorderedSet},
     AccountId, BorshStorageKey, PanicOnDefault,
 };
 
+mod asset;
 mod auth;
 mod burn;
 mod claim;

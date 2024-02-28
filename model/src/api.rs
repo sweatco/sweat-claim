@@ -1,13 +1,14 @@
+use std::collections::HashMap;
+
 use integration_trait::make_integration_version;
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
-use crate::{ClaimAvailabilityView, ClaimResultView, Duration};
+use crate::{Asset, ClaimAvailabilityView, ClaimResultView, Duration};
 
 #[cfg(feature = "integration-test")]
 pub struct ClaimContract<'a> {
     pub contract: &'a near_workspaces::Contract,
 }
-
 
 /// An API for initializing smart contracts in the context of fungible token operations.
 ///
@@ -206,4 +207,10 @@ pub trait ClaimApi {
     /// Panics if the claim is unavailable at the moment of calling. Users should ensure that
     /// their claim is available using the `is_claim_available` method prior to calling this.
     fn claim(&mut self) -> PromiseOrValue<ClaimResultView>;
+}
+
+#[make_integration_version]
+pub trait AssetsApi {
+    fn get_assets(&self) -> HashMap<Asset, AccountId>;
+    fn register_asset(&mut self, asset: Asset, contract_id: AccountId);
 }
