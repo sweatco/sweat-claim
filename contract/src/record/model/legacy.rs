@@ -2,8 +2,7 @@ use near_sdk::{
     borsh,
     borsh::{BorshDeserialize, BorshSerialize},
 };
-
-use crate::{AccrualIndex, UnixTimestamp};
+use claim_model::{AccrualIndex, UnixTimestamp};
 
 /// Represents the state of a registered account in the smart contract.
 ///
@@ -11,7 +10,7 @@ use crate::{AccrualIndex, UnixTimestamp};
 /// the smart contract. It tracks various aspects of the account, such as accrual references,
 /// claim history, and operational states.
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct AccountRecord {
+pub struct AccountRecordLegacy {
     /// A list of references to accrual entries in `Contract.accruals`.
     ///
     /// `accruals` contains pairs of timestamps and indices that link to specific accrual
@@ -55,7 +54,7 @@ pub struct AccountRecord {
     pub is_locked: bool,
 }
 
-impl AccountRecord {
+impl AccountRecordLegacy {
     pub fn new(now: UnixTimestamp) -> Self {
         Self {
             accruals: Vec::new(),

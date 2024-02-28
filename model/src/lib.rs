@@ -1,4 +1,3 @@
-pub mod account_record;
 pub mod api;
 pub mod event;
 

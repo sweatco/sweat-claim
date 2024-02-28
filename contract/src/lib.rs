@@ -1,10 +1,11 @@
-use claim_model::{account_record::AccountRecord, api::InitApi, AccrualsMap, Asset, Duration};
+use claim_model::{AccrualsMap, api::InitApi, Asset, Duration};
 use near_sdk::{
+    AccountId,
     borsh::{self, BorshDeserialize, BorshSerialize},
-    near_bindgen,
-    store::{LookupMap, UnorderedMap, UnorderedSet},
-    AccountId, BorshStorageKey, PanicOnDefault,
+    BorshStorageKey,
+    near_bindgen, PanicOnDefault, store::{LookupMap, UnorderedMap, UnorderedSet},
 };
+use record::model::legacy::AccountRecordLegacy;
 
 mod asset;
 mod auth;
@@ -76,7 +77,7 @@ pub struct Contract {
     /// `accounts` holds individual records for users, detailing their accrued tokens and
     /// related service information. It works in conjunction with `accruals` to provide a
     /// comprehensive view of each user's token status.
-    accounts: LookupMap<AccountId, AccountRecord>,
+    accounts: LookupMap<AccountId, AccountRecordLegacy>,
 
     /// Indicates whether a service call is currently in progress.
     ///

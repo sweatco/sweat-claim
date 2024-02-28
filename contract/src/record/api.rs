@@ -1,11 +1,11 @@
 use claim_model::{
-    account_record::AccountRecord,
     api::RecordApi,
     event::{emit, EventKind::Record, RecordData},
 };
-use near_sdk::{json_types::U128, near_bindgen, store::Vector, AccountId};
+use near_sdk::{AccountId, json_types::U128, near_bindgen, store::Vector};
 
 use crate::{common::now_seconds, Contract, ContractExt, StorageKey::AccrualsEntry};
+use crate::record::model::legacy::AccountRecordLegacy;
 
 #[near_bindgen]
 impl RecordApi for Contract {
@@ -32,9 +32,9 @@ impl RecordApi for Contract {
             if let Some(record) = self.accounts.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
             } else {
-                let record = AccountRecord {
+                let record = AccountRecordLegacy {
                     accruals: vec![(now_seconds, index)],
-                    ..AccountRecord::new(now_seconds)
+                    ..AccountRecordLegacy::new(now_seconds)
                 };
 
                 self.accounts.insert(account_id, record);

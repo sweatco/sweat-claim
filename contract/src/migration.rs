@@ -1,12 +1,13 @@
-use claim_model::{account_record::AccountRecord, AccrualsMap, Duration};
+use claim_model::{AccrualsMap, Duration};
 use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
-    env, near_bindgen,
-    store::{LookupMap, UnorderedMap, UnorderedSet},
-    AccountId, PanicOnDefault,
+    AccountId,
+    borsh::{self, BorshDeserialize, BorshSerialize}, env,
+    near_bindgen,
+    PanicOnDefault, store::{LookupMap, UnorderedMap, UnorderedSet},
 };
 
 use crate::{Contract, ContractExt, StorageKey};
+use crate::record::model::legacy::AccountRecordLegacy;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -16,7 +17,7 @@ pub struct ContractLegacy {
     claim_period: Duration,
     burn_period: Duration,
     accruals: AccrualsMap,
-    accounts: LookupMap<AccountId, AccountRecord>,
+    accounts: LookupMap<AccountId, AccountRecordLegacy>,
     is_service_call_running: bool,
 }
 
