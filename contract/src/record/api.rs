@@ -29,7 +29,7 @@ impl RecordApi for Contract {
             balances.1 += amount;
             balances.0.push(amount);
 
-            if let Some(record) = self.accounts.get_mut(&account_id) {
+            if let Some(record) = self.accounts_legacy.get_mut(&account_id) {
                 record.accruals.push((now_seconds, index));
             } else {
                 let record = AccountRecordLegacy {
@@ -37,7 +37,7 @@ impl RecordApi for Contract {
                     ..AccountRecordLegacy::new(now_seconds)
                 };
 
-                self.accounts.insert(account_id, record);
+                self.accounts_legacy.insert(account_id, record);
             }
         }
 

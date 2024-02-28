@@ -14,6 +14,7 @@ pub type TokensAmount = u128;
 pub type Duration = u32;
 pub type Asset = String;
 pub type AccrualsMap = UnorderedMap<UnixTimestamp, (Vector<TokensAmount>, TokensAmount)>;
+pub type AccrualsReference = Vec<(UnixTimestamp, AccrualIndex)>;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]

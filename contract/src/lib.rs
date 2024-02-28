@@ -1,11 +1,13 @@
-use claim_model::{AccrualsMap, api::InitApi, Asset, Duration};
+use claim_model::{api::InitApi, AccrualsMap, Asset, Duration};
 use near_sdk::{
-    AccountId,
     borsh::{self, BorshDeserialize, BorshSerialize},
-    BorshStorageKey,
-    near_bindgen, PanicOnDefault, store::{LookupMap, UnorderedMap, UnorderedSet},
+    near_bindgen,
+    store::{LookupMap, UnorderedMap, UnorderedSet},
+    AccountId, BorshStorageKey, PanicOnDefault,
 };
 use record::model::legacy::AccountRecordLegacy;
+
+use crate::record::model::versioned::AccountRecordVersioned;
 
 mod asset;
 mod auth;
@@ -77,7 +79,8 @@ pub struct Contract {
     /// `accounts` holds individual records for users, detailing their accrued tokens and
     /// related service information. It works in conjunction with `accruals` to provide a
     /// comprehensive view of each user's token status.
-    accounts: LookupMap<AccountId, AccountRecordLegacy>,
+    accounts_legacy: LookupMap<AccountId, AccountRecordLegacy>,
+    accounts: LookupMap<AccountId, AccountRecordVersioned>,
 
     /// Indicates whether a service call is currently in progress.
     ///
@@ -89,13 +92,14 @@ pub struct Contract {
 
 #[derive(BorshStorageKey, BorshSerialize)]
 pub(crate) enum StorageKey {
-    Accounts,
+    AccountsLegacy,
     Accruals,
     AccrualsEntry(u32),
     Oracles,
     Assets,
-    ExtraAccruals(),
+    ExtraAccruals,
     ExtraAccrualsEntry(Asset),
+    Accounts,
 }
 
 #[near_bindgen]
@@ -108,9 +112,10 @@ impl InitApi for Contract {
             token_account_id,
             assets: UnorderedMap::new(StorageKey::Assets),
 
+            accounts_legacy: LookupMap::new(StorageKey::AccountsLegacy),
             accounts: LookupMap::new(StorageKey::Accounts),
             accruals: UnorderedMap::new(StorageKey::Accruals),
-            extra_accruals: LookupMap::new(StorageKey::ExtraAccruals()),
+            extra_accruals: LookupMap::new(StorageKey::ExtraAccruals),
             oracles: UnorderedSet::new(StorageKey::Oracles),
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,

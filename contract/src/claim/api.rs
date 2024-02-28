@@ -14,7 +14,7 @@ use crate::{
 #[near_bindgen]
 impl ClaimApi for Contract {
     fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
-        let Some(account_data) = self.accounts.get(&account_id) else {
+        let Some(account_data) = self.accounts_legacy.get(&account_id) else {
             return U128(0);
         };
 
@@ -39,7 +39,7 @@ impl ClaimApi for Contract {
     }
 
     fn is_claim_available(&self, account_id: AccountId) -> ClaimAvailabilityView {
-        let Some(account_data) = self.accounts.get(&account_id) else {
+        let Some(account_data) = self.accounts_legacy.get(&account_id) else {
             return ClaimAvailabilityView::Unregistered;
         };
 
@@ -59,7 +59,7 @@ impl ClaimApi for Contract {
             "Claim is not available at the moment"
         );
 
-        let account_data = self.accounts.get_mut(&account_id).expect("Account data is not found");
+        let account_data = self.accounts_legacy.get_mut(&account_id).expect("Account data is not found");
         require!(!account_data.is_locked, "Another operation is running");
 
         account_data.is_locked = true;
@@ -108,7 +108,7 @@ impl Contract {
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
     ) -> ClaimResultView {
-        let account = self.accounts.get_mut(&account_id).expect("Account not found");
+        let account = self.accounts_legacy.get_mut(&account_id).expect("Account not found");
         account.is_locked = false;
 
         if is_success {
