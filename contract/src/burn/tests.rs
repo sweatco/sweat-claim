@@ -81,7 +81,7 @@ fn test_ext_error_on_burn_when_outdated_tokens_exist() {
 }
 
 #[test]
-fn test_burn_when_outdated_tokens_don_not_exist() {
+fn test_burn_when_outdated_tokens_do_not_exist() {
     let (mut context, mut contract, accounts) = Context::init_with_oracle();
     set_test_future_success(EXT_BURN_FUTURE, true);
 
