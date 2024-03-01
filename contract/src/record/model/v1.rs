@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use claim_model::{AccrualsReference, Asset, UnixTimestamp};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 
+use crate::record::model::{legacy::AccountRecordLegacy, versioned::AccountRecord};
+
 /// Represents the state of a registered account in the smart contract.
 ///
 /// `AccountRecord` maintains the status and history of an individual user's account within
 /// the smart contract. It tracks various aspects of the account, such as accrual references,
 /// claim history, and operational states.
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Clone)]
 pub struct AccountRecordV1 {
     /// A list of references to accrual entries in `Contract.accruals`.
     ///
@@ -62,6 +64,18 @@ impl AccountRecordV1 {
             is_enabled: true,
             claim_period_refreshed_at: now,
             is_locked: false,
+        }
+    }
+}
+
+impl From<AccountRecordLegacy> for AccountRecord {
+    fn from(record: AccountRecordLegacy) -> Self {
+        Self {
+            accruals: record.accruals,
+            extra_accruals: HashMap::new(),
+            is_enabled: record.is_enabled,
+            claim_period_refreshed_at: record.claim_period_refreshed_at,
+            is_locked: record.is_locked,
         }
     }
 }
