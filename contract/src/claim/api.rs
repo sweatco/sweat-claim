@@ -7,6 +7,7 @@ use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, Acco
 
 use crate::{
     common::{now_seconds, UnixTimestampExtension},
+    record::model::versioned::AccountRecordVersioned,
     Contract, ContractExt,
     StorageKey::AccrualsEntry,
 };
@@ -54,15 +55,15 @@ impl ClaimApi for Contract {
     fn claim(&mut self) -> PromiseOrValue<ClaimResultView> {
         let account_id = env::predecessor_account_id();
 
+        self.migrate_record_if_needed(&account_id);
+
         require!(
             self.is_claim_available(account_id.clone()) == ClaimAvailabilityView::Available,
             "Claim is not available at the moment"
         );
 
-        let account_data = self
-            .accounts_legacy
-            .get_mut(&account_id)
-            .expect("Account data is not found");
+        let AccountRecordVersioned::V1(account_data) =
+            self.accounts.get_mut(&account_id).expect("Account data is not found");
         require!(!account_data.is_locked, "Another operation is running");
 
         account_data.is_locked = true;
@@ -111,7 +112,7 @@ impl Contract {
         details: Vec<(UnixTimestamp, TokensAmount)>,
         is_success: bool,
     ) -> ClaimResultView {
-        let account = self.accounts_legacy.get_mut(&account_id).expect("Account not found");
+        let AccountRecordVersioned::V1(account) = self.accounts.get_mut(&account_id).expect("Account is not found");
         account.is_locked = false;
 
         if is_success {

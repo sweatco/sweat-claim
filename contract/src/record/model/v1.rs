@@ -10,7 +10,7 @@ use crate::record::model::{legacy::AccountRecordLegacy, versioned::AccountRecord
 /// `AccountRecord` maintains the status and history of an individual user's account within
 /// the smart contract. It tracks various aspects of the account, such as accrual references,
 /// claim history, and operational states.
-#[derive(BorshDeserialize, BorshSerialize, Clone)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug)]
 pub struct AccountRecordV1 {
     /// A list of references to accrual entries in `Contract.accruals`.
     ///

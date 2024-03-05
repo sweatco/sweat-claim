@@ -74,12 +74,20 @@ pub struct Contract {
     accruals: AccrualsMap,
     extra_accruals: LookupMap<Asset, AccrualsMap>,
 
+    /// TODO: Update docs
+    /// A map containing accrual and service details for each user account.
+    ///
+    /// `accounts_legacy` holds individual records for users, detailing their accrued tokens and
+    /// related service information. It works in conjunction with `accruals` to provide a
+    /// comprehensive view of each user's token status.
+    #[deprecated(note = "Use `accounts` instead")]
+    accounts_legacy: LookupMap<AccountId, AccountRecordLegacy>,
+
     /// A map containing accrual and service details for each user account.
     ///
     /// `accounts` holds individual records for users, detailing their accrued tokens and
     /// related service information. It works in conjunction with `accruals` to provide a
     /// comprehensive view of each user's token status.
-    accounts_legacy: LookupMap<AccountId, AccountRecordLegacy>,
     accounts: LookupMap<AccountId, AccountRecordVersioned>,
 
     /// Indicates whether a service call is currently in progress.
@@ -104,6 +112,7 @@ pub(crate) enum StorageKey {
 
 #[near_bindgen]
 impl InitApi for Contract {
+    #[allow(deprecated)]
     #[init]
     fn init(token_account_id: AccountId) -> Self {
         Self::assert_private();

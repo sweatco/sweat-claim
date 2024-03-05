@@ -1,3 +1,4 @@
+use claim_model::{AccrualIndex, UnixTimestamp};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 
 use crate::record::model::v1::AccountRecordV1;
@@ -5,6 +6,14 @@ use crate::record::model::v1::AccountRecordV1;
 #[derive(BorshDeserialize, BorshSerialize, Clone)]
 pub(crate) enum AccountRecordVersioned {
     V1(AccountRecordV1),
+}
+
+impl AccountRecordVersioned {
+    pub(crate) fn push(&mut self, accrual: (UnixTimestamp, AccrualIndex)) {
+        match self {
+            AccountRecordVersioned::V1(record) => record.accruals.push(accrual),
+        }
+    }
 }
 
 impl Into<AccountRecord> for AccountRecordVersioned {

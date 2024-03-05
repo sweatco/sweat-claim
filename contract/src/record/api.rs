@@ -38,14 +38,13 @@ impl RecordApi for Contract {
             balances.0.push(amount.0);
 
             if let Some(record) = self.accounts.get_mut(account_id) {
-                let mut record: AccountRecord = record.clone().into();
-                record.accruals.push((now_seconds, balances.0.len() - 1));
+                let accrual = (now_seconds, balances.0.len() - 1);
+                record.push(accrual);
             } else {
                 let record = AccountRecord {
                     accruals: vec![(now_seconds, balances.0.len() - 1)],
                     ..AccountRecord::new(now_seconds)
                 };
-
                 self.accounts.insert(account_id.clone(), record.into_versioned());
             }
         }
@@ -55,12 +54,16 @@ impl RecordApi for Contract {
 }
 
 impl Contract {
+    #[allow(deprecated)]
     pub(crate) fn migrate_record_if_needed(&mut self, account_id: &AccountId) {
-        if let Some(record_legacy) = self.accounts_legacy.get(&account_id) {
+        if let Some(record_legacy) = self.accounts_legacy.get(account_id) {
             let record: AccountRecord = record_legacy.clone().into();
             self.accounts.insert(account_id.clone(), record.into_versioned());
+            self.accounts_legacy.remove(account_id);
         }
     }
+
+    #[allow(deprecated)]
     pub(crate) fn get_account(&self, account_id: &AccountId) -> Option<AccountRecord> {
         if let Some(account) = self.accounts_legacy.get(account_id) {
             Some(account.clone().into())

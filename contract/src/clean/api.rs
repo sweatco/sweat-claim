@@ -9,11 +9,13 @@ pub trait CleanApi {
 
 #[near_bindgen]
 impl CleanApi for Contract {
+    #[allow(deprecated)]
     fn clean(&mut self, account_ids: Vec<AccountId>) {
         self.assert_oracle();
 
         for account_id in account_ids.clone() {
-            self.accounts_legacy.set(account_id, None);
+            self.accounts_legacy.set(account_id.clone(), None);
+            self.accounts.set(account_id, None);
         }
 
         emit(EventKind::Clean(CleanData { account_ids }));

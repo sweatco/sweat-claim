@@ -22,6 +22,7 @@ pub struct ContractLegacy {
 
 #[near_bindgen]
 impl Contract {
+    #[allow(deprecated)]
     #[init(ignore_state)]
     #[private]
     pub fn migrate() -> Self {
