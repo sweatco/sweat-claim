@@ -8,7 +8,6 @@ pub struct ClaimContract<'a> {
     pub contract: &'a near_workspaces::Contract,
 }
 
-
 /// An API for initializing smart contracts in the context of fungible token operations.
 ///
 /// This API provides a method to initialize the smart contract, primarily for interactions

@@ -44,10 +44,16 @@ impl ClaimApi for Contract {
         };
 
         let claim_period_refreshed_at = account_data.claim_period_refreshed_at;
-        if now_seconds() - claim_period_refreshed_at > self.claim_period {
-            ClaimAvailabilityView::Available
-        } else {
+        if claim_period_refreshed_at.is_within_period(now_seconds(), self.claim_period) {
             ClaimAvailabilityView::Unavailable((claim_period_refreshed_at, self.claim_period))
+        } else {
+            let claimable_entries_count: u16 = account_data
+                .accruals
+                .iter()
+                .filter(|(datetime, _)| datetime.is_within_period(now_seconds(), self.burn_period))
+                .count() as _;
+
+            ClaimAvailabilityView::Available(claimable_entries_count)
         }
     }
 
@@ -55,7 +61,10 @@ impl ClaimApi for Contract {
         let account_id = env::predecessor_account_id();
 
         require!(
-            self.is_claim_available(account_id.clone()) == ClaimAvailabilityView::Available,
+            matches!(
+                self.is_claim_available(account_id.clone()),
+                ClaimAvailabilityView::Available(_)
+            ),
             "Claim is not available at the moment"
         );
 

@@ -68,7 +68,7 @@ fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_cla
     context.set_block_timestamp_in_seconds(check_timestamp);
 
     let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
-    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available);
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available(0));
 }
 
 #[test]
@@ -103,7 +103,27 @@ fn test_check_claim_availability_when_user_has_tokens_and_claim_period_after_rec
     assert_eq!(alice_balance, alice_new_balance);
 
     let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
-    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available);
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available(1));
+}
+
+#[test]
+fn test_check_claim_availability_when_user_has_multiple_claim_records_and_claim_period_after_record_creation_is_passed()
+{
+    let (mut context, mut contract, accounts) = Context::init_with_oracle();
+
+    let record_count: u16 = 5;
+    let alice_balance = 300_000;
+    context.switch_account(&accounts.oracle);
+
+    for i in 0..record_count {
+        contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance))]);
+        context.set_block_timestamp_in_seconds(i as _);
+    }
+
+    context.set_block_timestamp_in_seconds(contract.claim_period as u64 + 100);
+
+    let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available(record_count));
 }
 
 #[test]
@@ -147,7 +167,7 @@ fn test_claim_when_user_has_tokens_and_current_time_matches_claim_period() {
     assert_eq!(0, alice_new_balance);
 
     let alice_can_claim = contract.is_claim_available(accounts.alice.clone());
-    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available);
+    assert_eq!(alice_can_claim, ClaimAvailabilityView::Available(0));
 }
 
 #[test]
