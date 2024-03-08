@@ -1,8 +1,22 @@
 use claim_model::{Duration, UnixTimestamp};
 use near_sdk::env::{block_timestamp_ms, panic_str};
 
+use crate::common::tests::data::get_test_future_success;
+
 mod asserts;
 pub(crate) mod tests;
+
+pub(crate) fn is_promise_success(tag: &str) -> bool {
+    #[cfg(test)]
+    {
+        get_test_future_success(tag)
+    }
+
+    #[cfg(not(test))]
+    {
+        near_sdk::is_promise_success()
+    }
+}
 
 fn ms_timestamp_to_seconds(ms: u64) -> UnixTimestamp {
     u32::try_from(ms / 1000)
