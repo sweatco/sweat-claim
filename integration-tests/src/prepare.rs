@@ -1,14 +1,12 @@
 use async_trait::async_trait;
-use integration_utils::{ misc::ToNear};
 use claim_model::{
-    api::{AuthApiIntegration, ConfigApiIntegration, InitApiIntegration},
+    api::{AuthApiIntegration, ClaimContract, ConfigApiIntegration, InitApiIntegration},
     Duration,
 };
+use integration_utils::misc::ToNear;
 use near_sdk::json_types::U128;
 use near_workspaces::Account;
 use sweat_model::{StorageManagementIntegration, SweatApiIntegration, SweatContract};
-use claim_model::api::ClaimContract;
-
 
 const FT_CONTRACT: &str = "sweat";
 const SWEAT_CLAIM: &str = "sweat_claim";
@@ -37,11 +35,15 @@ impl IntegrationContext for Context {
     }
 
     fn sweat_claim(&self) -> ClaimContract {
-        ClaimContract { contract: &self.contracts[SWEAT_CLAIM] }
+        ClaimContract {
+            contract: &self.contracts[SWEAT_CLAIM],
+        }
     }
 
     fn ft_contract(&self) -> SweatContract {
-        SweatContract { contract: &self.contracts[FT_CONTRACT] }
+        SweatContract {
+            contract: &self.contracts[FT_CONTRACT],
+        }
     }
 }
 
@@ -50,11 +52,7 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
     let manager = context.manager().await?;
     let alice = context.alice().await?;
 
-    context
-        .ft_contract()
-        .new(".u.sweat.testnet".to_string().into())
-
-        .await?;
+    context.ft_contract().new(".u.sweat.testnet".to_string().into()).await?;
     context
         .sweat_claim()
         .init(context.ft_contract().contract.as_account().to_near())

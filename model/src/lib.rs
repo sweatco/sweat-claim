@@ -15,8 +15,12 @@ pub type Duration = u32; // Period in seconds
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]
 pub enum ClaimAvailabilityView {
-    Available,
+    /// Claim is available. Wrapped number is the amount of claimable entries.
+    Available(u16),
+    /// Claim is not available. Wrapped tuple is the timestamp the last claim
+    /// and the duration of the claim period.
     Unavailable((UnixTimestamp, Duration)),
+    /// User is not registered in the contract.
     Unregistered,
 }
 
