@@ -51,7 +51,9 @@ impl ClaimApi for Contract {
                 .accruals
                 .iter()
                 .filter(|(datetime, _)| datetime.is_within_period(now_seconds(), self.burn_period))
-                .count() as _;
+                .count()
+                .try_into()
+                .expect("To many claimable entries. Expected amount to fit into u16.");
 
             ClaimAvailabilityView::Available(claimable_entries_count)
         }
