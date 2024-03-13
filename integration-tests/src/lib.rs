@@ -64,7 +64,7 @@ async fn happy_flow() -> anyhow::Result<()> {
         .await?;
 
     let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).await?;
-    assert_eq!(is_claim_available, ClaimAvailabilityView::Available);
+    assert_eq!(is_claim_available, ClaimAvailabilityView::Available(1));
 
     context.sweat_claim().claim().with_user(&alice).await?;
 
