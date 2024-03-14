@@ -1,6 +1,7 @@
 use claim_model::{Duration, UnixTimestamp};
 use near_sdk::env::{block_timestamp_ms, panic_str};
 
+#[cfg(test)]
 use crate::common::tests::data::get_test_future_success;
 
 mod asserts;

@@ -79,11 +79,18 @@ impl Contract {
         tail: Vec<Claim>,
         result: ClaimAllResultView,
     ) -> PromiseOrValue<ClaimAllResultView> {
+        use claim_model::is_near;
+
         let args = Self::compose_transfer_arguments(&account_id, head.details.total);
         let token_account_id = self.get_token_account_id(&head.asset);
 
-        Promise::new(token_account_id)
-            .function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
+        let promise = if is_near(&head.asset) {
+            Promise::new(account_id.clone()).transfer(head.details.total)
+        } else {
+            Promise::new(token_account_id).function_call("ft_transfer".to_string(), args, 1, Gas(5 * Gas::ONE_TERA.0))
+        };
+
+        promise
             .then(
                 ext_self::ext(env::current_account_id())
                     .with_static_gas(Gas(5 * Gas::ONE_TERA.0))

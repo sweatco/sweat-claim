@@ -1,7 +1,15 @@
 use claim_model::{
-    api::RecordApi, event::{emit, EventKind::Record, RecordData}, is_near, Asset
+    api::RecordApi,
+    event::{emit, EventKind::Record, RecordData},
+    is_near, Asset,
 };
-use near_sdk::{env::{self, panic_str}, json_types::U128, near_bindgen, store::Vector, AccountId};
+use near_sdk::{
+    env::{self, panic_str},
+    json_types::U128,
+    near_bindgen,
+    store::Vector,
+    AccountId,
+};
 
 use crate::{
     common::now_seconds, record::model::versioned::AccountRecord, Contract, ContractExt, StorageKey::AccrualsEntry,
@@ -16,7 +24,10 @@ impl RecordApi for Contract {
         let attached_deposit = env::attached_deposit();
         if asset.clone().map(|asset| is_near(&asset)) == Some(true) {
             let total_amount: u128 = amounts.iter().map(|(_, amount)| amount.0).sum();
-            assert!(total_amount == attached_deposit, "Total amount does not match attached deposit");
+            assert!(
+                total_amount == attached_deposit,
+                "Total amount does not match attached deposit"
+            );
         }
 
         for (account_id, _) in &amounts {
