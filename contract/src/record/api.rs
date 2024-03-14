@@ -1,9 +1,7 @@
 use claim_model::{
-    api::RecordApi,
-    event::{emit, EventKind::Record, RecordData},
-    Asset,
+    api::RecordApi, event::{emit, EventKind::Record, RecordData}, is_near, Asset
 };
-use near_sdk::{env::panic_str, json_types::U128, near_bindgen, store::Vector, AccountId};
+use near_sdk::{env::{self, panic_str}, json_types::U128, near_bindgen, store::Vector, AccountId};
 
 use crate::{
     common::now_seconds, record::model::versioned::AccountRecord, Contract, ContractExt, StorageKey::AccrualsEntry,
@@ -11,8 +9,15 @@ use crate::{
 
 #[near_bindgen]
 impl RecordApi for Contract {
+    #[payable]
     fn record_batch_for_hold(&mut self, amounts: Vec<(AccountId, U128)>, asset: Option<Asset>) {
         self.assert_oracle();
+
+        let attached_deposit = env::attached_deposit();
+        if asset.clone().map(|asset| is_near(&asset)) == Some(true) {
+            let total_amount: u128 = amounts.iter().map(|(_, amount)| amount.0).sum();
+            assert!(total_amount == attached_deposit, "Total amount does not match attached deposit");
+        }
 
         for (account_id, _) in &amounts {
             self.migrate_record_if_needed(account_id);
