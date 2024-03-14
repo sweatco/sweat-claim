@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use claim_model::{api::AssetsApi, Asset};
 use near_sdk::{near_bindgen, AccountId};
 
-use crate::{Contract, ContractExt};
+use crate::{get_default_asset, Contract, ContractExt};
 
 #[near_bindgen]
 impl AssetsApi for Contract {
@@ -14,5 +14,15 @@ impl AssetsApi for Contract {
     fn register_asset(&mut self, asset: Asset, contract_id: AccountId) {
         self.assert_oracle();
         self.assets.insert(asset, contract_id);
+    }
+}
+
+impl Contract {
+    pub(crate) fn get_token_account_id(&self, asset: &Asset) -> AccountId {
+        if *asset == get_default_asset() {
+            self.token_account_id.clone()
+        } else {
+            self.assets.get(asset).expect("Asset not found").clone()
+        }
     }
 }

@@ -7,6 +7,7 @@ use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, Acco
 
 use crate::{
     common::{now_seconds, UnixTimestampExtension},
+    get_default_asset,
     record::model::versioned::AccountRecordVersioned,
     Contract, ContractExt,
     StorageKey::AccrualsEntry,
@@ -98,7 +99,7 @@ impl ClaimApi for Contract {
             self.transfer_external(now, account_id, total_accrual, details)
         } else {
             account_data.is_locked = false;
-            PromiseOrValue::Value(ClaimResultView::new(0))
+            PromiseOrValue::Value(ClaimResultView::new(get_default_asset(), true, Some(0)))
         }
     }
 }
@@ -120,6 +121,7 @@ impl Contract {
 
             let event_data = ClaimData {
                 account_id,
+                asset: get_default_asset(),
                 details: details
                     .iter()
                     .map(|(timestamp, amount)| (*timestamp, U128(*amount)))
@@ -128,7 +130,7 @@ impl Contract {
             };
             emit(EventKind::Claim(event_data));
 
-            return ClaimResultView::new(total_accrual);
+            return ClaimResultView::new(get_default_asset(), true, Some(total_accrual));
         }
 
         for (timestamp, amount) in details {
@@ -143,7 +145,7 @@ impl Contract {
             account.accruals.push((timestamp, daily_accruals.0.len() - 1));
         }
 
-        ClaimResultView::new(0)
+        ClaimResultView::new(get_default_asset(), false, None)
     }
 }
 

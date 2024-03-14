@@ -1,5 +1,5 @@
 use claim_model::{Asset, TokensAmount, UnixTimestamp};
-use near_sdk::serde::{self, Deserialize, Serialize};
+use near_sdk::serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]

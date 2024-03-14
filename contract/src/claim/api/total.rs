@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use claim_model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
+    AccrualsReference, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
 use near_sdk::{
     env, env::log_str, ext_contract, json_types::U128, require, serde_json::json, store::Vector, Gas, Promise,
@@ -13,6 +13,7 @@ use near_sdk::{
 use crate::{
     claim::model::{Claim, ClaimDetails},
     common::{is_promise_success, now_seconds},
+    record::model::versioned::AccountRecord,
     Contract,
     StorageKey::AccrualsEntry,
     *,
@@ -31,11 +32,8 @@ impl Contract {
         );
 
         let details = self.collect_accruals(&account_id);
-        let AccountRecordVersioned::V1(account_data) =
-            self.accounts.get_mut(&account_id).expect("Account data is not found");
 
-        account_data.accruals.clear();
-        account_data.extra_accruals.clear();
+        self.clear_all_accruals(&account_id);
 
         if details.is_empty() {
             PromiseOrValue::Value(ClaimAllResultView::default())
@@ -52,38 +50,24 @@ impl Contract {
     }
 
     fn collect_accruals(&mut self, account_id: &AccountId) -> Vec<Claim> {
-        let account_data = self.accounts.get_mut(account_id).expect("Account data is not found");
+        let AccountRecordVersioned::V1(account_data) = self
+            .accounts
+            .get(account_id)
+            .expect("Account data is not found")
+            .clone();
 
         let now = now_seconds();
-        let mut details = HashMap::<Asset, ClaimDetails>::new();
+        let details = &mut HashMap::<Asset, ClaimDetails>::new();
 
-        for (datetime, index) in &account_data.accruals {
-            if now - *datetime > self.burn_period {
-                continue;
-            }
-
-            let Some((accruals, total, asset)) = self.accruals.get_mut(datetime) else {
-                continue;
-            };
-
-            let Some(amount) = accruals.get_mut(*index) else {
-                continue;
-            };
-
-            if !details.contains_key(asset) {
-                details.insert(asset.clone(), ClaimDetails::default());
-            }
-
-            log_str(format!("Add {amount:?} for {asset}").as_str());
-
-            let details = details.get_mut(asset).unwrap();
-            details.accruals.push((*datetime, *amount));
-            details.total += *amount;
-            *total -= *amount;
-            *amount = 0;
+        self.collect_claim_details(details, now, &get_default_asset(), &account_data.accruals);
+        for (asset, accruals) in &account_data.extra_accruals {
+            self.collect_claim_details(details, now, asset, accruals);
         }
 
-        details.into_iter().map(|(key, value)| Claim::new(key, value)).collect()
+        details
+            .iter()
+            .map(|(key, value)| Claim::new(key.clone(), value.clone()))
+            .collect()
     }
 
     #[cfg(not(test))]
@@ -138,14 +122,12 @@ impl Contract {
         account_id: AccountId,
         head: Claim,
     ) -> ClaimResultView {
-        let AccountRecordVersioned::V1(account) = self.accounts.get_mut(&account_id).expect("Account not found");
-
         let asset = &head.asset;
         let details = &head.details.accruals;
         let amount = head.details.total;
 
         let result = if is_success {
-            account.claim_period_refreshed_at = now;
+            self.get_account_mut(&account_id).claim_period_refreshed_at = now;
 
             let event_data = ClaimData {
                 account_id,
@@ -161,15 +143,12 @@ impl Contract {
             Some(amount)
         } else {
             for (timestamp, amount) in details {
-                let daily_accruals = self
+                self.push_accrual(asset, timestamp, amount);
+
+                let accrual_index = self.get_daily_accruals(asset, timestamp).0.len() - 1;
+                self.get_account_mut(&account_id)
                     .accruals
-                    .entry(*timestamp)
-                    .or_insert_with(|| (Vector::new(AccrualsEntry(*timestamp)), 0, asset.clone()));
-
-                daily_accruals.0.push(*amount);
-                daily_accruals.1 += amount;
-
-                account.accruals.push((*timestamp, daily_accruals.0.len() - 1));
+                    .push((*timestamp, accrual_index));
             }
 
             None
@@ -177,10 +156,94 @@ impl Contract {
 
         ClaimResultView::new(asset.clone(), is_success, result)
     }
+
+    fn push_accrual(&mut self, asset: &Asset, timestamp: &UnixTimestamp, amount: &TokensAmount) {
+        let daily_accruals = self.get_daily_accruals_mut(asset, timestamp);
+        daily_accruals.0.push(*amount);
+        daily_accruals.1 += amount;
+    }
 }
 
 impl Contract {
-    fn clear_all_accruals(&mut self) {}
+    fn get_account_mut(&mut self, account_id: &AccountId) -> &mut AccountRecord {
+        let AccountRecordVersioned::V1(account) = self.accounts.get_mut(&account_id).expect("Account not found");
+
+        account
+    }
+
+    fn get_daily_accruals(&self, asset: &Asset, timestamp: &UnixTimestamp) -> &(Vector<TokensAmount>, TokensAmount) {
+        self.get_accruals(asset)
+            .get(timestamp)
+            .expect("Daily accruals not found")
+    }
+
+    fn get_daily_accruals_mut(
+        &mut self,
+        asset: &Asset,
+        timestamp: &UnixTimestamp,
+    ) -> &mut (Vector<TokensAmount>, TokensAmount) {
+        self.get_accruals_mut(asset)
+            .entry(*timestamp)
+            .or_insert_with(|| (Vector::new(AccrualsEntry(*timestamp)), 0))
+    }
+
+    fn get_accruals(&self, asset: &Asset) -> &AccrualsMap {
+        if *asset == get_default_asset() {
+            &self.accruals
+        } else {
+            self.extra_accruals.get(asset).expect("Asset not found")
+        }
+    }
+
+    fn get_accruals_mut(&mut self, asset: &Asset) -> &mut AccrualsMap {
+        if *asset == get_default_asset() {
+            &mut self.accruals
+        } else {
+            self.extra_accruals.get_mut(asset).expect("Asset not found")
+        }
+    }
+
+    fn clear_all_accruals(&mut self, account_id: &AccountId) {
+        let AccountRecordVersioned::V1(account_data) =
+            self.accounts.get_mut(account_id).expect("Account data is not found");
+
+        account_data.accruals.clear();
+        account_data.extra_accruals.clear();
+    }
+
+    fn collect_claim_details(
+        &mut self,
+        acc: &mut HashMap<Asset, ClaimDetails>,
+        now: UnixTimestamp,
+        asset: &Asset,
+        accruals: &AccrualsReference,
+    ) {
+        for (datetime, index) in accruals {
+            if now - *datetime > self.burn_period {
+                continue;
+            }
+
+            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
+                continue;
+            };
+
+            let Some(amount) = accruals.get_mut(*index) else {
+                continue;
+            };
+
+            if !acc.contains_key(asset) {
+                acc.insert(asset.clone(), ClaimDetails::default());
+            }
+
+            log_str(format!("Add {amount:?} for {asset}").as_str());
+
+            let details = acc.get_mut(asset).unwrap();
+            details.accruals.push((*datetime, *amount));
+            details.total += *amount;
+            *total -= *amount;
+            *amount = 0;
+        }
+    }
 }
 
 #[ext_contract(ext_self)]
