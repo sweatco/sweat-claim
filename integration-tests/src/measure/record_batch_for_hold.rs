@@ -76,7 +76,7 @@ async fn measure_record_batch_for_hold(count: usize) -> Result<Gas> {
         &oracle,
         context
             .sweat_claim()
-            .record_batch_for_hold(records)
+            .record_batch_for_hold(records, None)
             .with_user(&oracle)
             .into_future(),
     )

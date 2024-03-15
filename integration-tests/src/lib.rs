@@ -2,13 +2,14 @@
 
 use anyhow::Result;
 use claim_model::{
-    api::{BurnApiIntegration, ClaimApiIntegration},
+    api::{AssetsApiIntegration, BurnApiIntegration, ClaimApiIntegration},
     ClaimAvailabilityView,
 };
 use integration_utils::misc::ToNear;
 use near_sdk::{
     json_types::{U128, U64},
     serde_json::json,
+    AccountId,
 };
 use sweat_model::{FungibleTokenCoreIntegration, Payout, SweatApiIntegration, SweatContract, SweatDeferIntegration};
 
@@ -29,13 +30,13 @@ async fn happy_flow() -> anyhow::Result<()> {
     let manager = context.manager().await?;
 
     let alice_steps = 10_000;
-    let alice_initial_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
+    let alice_initial_balance = context.sweat_ft().ft_balance_of(alice.to_near()).await?;
 
-    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).await?.0;
+    let target_token_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
     let target_payout = Payout::from(target_token_amount);
 
     context
-        .ft_contract()
+        .sweat_ft()
         .defer_batch(
             vec![(alice.to_near(), alice_steps)],
             context.sweat_claim().contract.as_account().to_near(),
@@ -44,7 +45,7 @@ async fn happy_flow() -> anyhow::Result<()> {
         .await?;
 
     let claim_contract_balance = context
-        .ft_contract()
+        .sweat_ft()
         .ft_balance_of(context.sweat_claim().contract.as_account().to_near())
         .await?;
 
@@ -68,9 +69,38 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     context.sweat_claim().claim().with_user(&alice).await?;
 
-    let alice_balance = context.ft_contract().ft_balance_of(alice.to_near()).await?;
+    let alice_balance = context.sweat_ft().ft_balance_of(alice.to_near()).await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
     assert_eq!(alice_balance_change, target_payout.amount_for_user);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn claim_multiple_assets() -> anyhow::Result<()> {
+    let mut context = prepare_contract().await?;
+
+    let alice = context.alice().await?;
+    let manager = context.manager().await?;
+
+    let alice_steps = 10_000;
+
+    context
+        .sweat_claim()
+        .register_asset("USDT".to_string(), context.usdt_ft().contract.as_account().to_near())
+        .with_user(&manager)
+        .await?;
+
+    let target_token_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
+    let target_payout = Payout::from(target_token_amount);
+    context
+        .sweat_ft()
+        .defer_batch(
+            vec![(alice.to_near(), alice_steps)],
+            context.sweat_claim().contract.as_account().to_near(),
+        )
+        .with_user(&manager)
+        .await?;
 
     Ok(())
 }
@@ -84,11 +114,11 @@ async fn burn() -> anyhow::Result<()> {
 
     let alice_steps = 10_000;
 
-    let target_token_amount = context.ft_contract().formula(U64(0), alice_steps).await?.0;
+    let target_token_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
     let target_payout = Payout::from(target_token_amount);
 
     context
-        .ft_contract()
+        .sweat_ft()
         .defer_batch(
             vec![(alice.to_near(), alice_steps)],
             context.sweat_claim().contract.as_account().to_near(),
@@ -97,7 +127,7 @@ async fn burn() -> anyhow::Result<()> {
         .await?;
 
     let claim_contract_balance = context
-        .ft_contract()
+        .sweat_ft()
         .ft_balance_of(context.sweat_claim().contract.as_account().to_near())
         .await?;
 
@@ -131,12 +161,12 @@ async fn outdate() -> anyhow::Result<()> {
     let alice_steps = 10_000;
 
     let (_, target_effective_token_amount, _) = context
-        .ft_contract()
+        .sweat_ft()
         .formula_detailed(U64(steps_since_tge), alice_steps)
         .await?;
 
     context
-        .ft_contract()
+        .sweat_ft()
         .defer_batch(
             vec![(alice.to_near(), alice_steps)],
             context.sweat_claim().contract.as_account().to_near(),
@@ -160,12 +190,12 @@ async fn outdate() -> anyhow::Result<()> {
     assert_eq!(0, alice_deferred_balance.0);
 
     let (_, target_outdated_effective_token_amount, _) = context
-        .ft_contract()
+        .sweat_ft()
         .formula_detailed(U64(steps_since_tge), alice_steps)
         .await?;
 
     context
-        .ft_contract()
+        .sweat_ft()
         .defer_batch(
             vec![(alice.to_near(), alice_steps)],
             context.sweat_claim().contract.as_account().to_near(),
@@ -177,12 +207,12 @@ async fn outdate() -> anyhow::Result<()> {
     context.fast_forward_hours(2).await?;
 
     let (_, target_effective_token_amount, _) = context
-        .ft_contract()
+        .sweat_ft()
         .formula_detailed(U64(steps_since_tge), alice_steps)
         .await?;
 
     context
-        .ft_contract()
+        .sweat_ft()
         .defer_batch(
             vec![(alice.to_near(), alice_steps)],
             context.sweat_claim().contract.as_account().to_near(),
