@@ -3859,6 +3859,7 @@ name = "sweat_claim"
 version = "1.0.1"
 dependencies = [
  "claim-model",
+ "near-contract-standards",
  "near-sdk",
 ]
 

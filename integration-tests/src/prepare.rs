@@ -66,8 +66,14 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
     let alice = context.alice().await?;
     let claim_contract_account = context.sweat_claim().contract.as_account();
 
-    context.sweat_ft().prepare_ft_contract(".u.sweat.testnet", &manager, &alice, claim_contract_account).await?;
-    context.usdt_ft().prepare_ft_contract(".u.usdt.testnet", &manager, &alice, claim_contract_account).await?;
+    context
+        .sweat_ft()
+        .prepare_ft_contract(".u.sweat.testnet", &manager, &alice, claim_contract_account)
+        .await?;
+    context
+        .usdt_ft()
+        .prepare_ft_contract(".u.usdt.testnet", &manager, &alice, claim_contract_account)
+        .await?;
 
     context
         .sweat_claim()
@@ -95,22 +101,36 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
 }
 
 trait SweatContractInit {
-    async fn prepare_ft_contract(&self, postfix: &str, manager: &Account, alice: &Account, claim_contract_account: &Account) -> anyhow::Result<()>;
+    async fn prepare_ft_contract(
+        &self,
+        postfix: &str,
+        manager: &Account,
+        alice: &Account,
+        claim_contract_account: &Account,
+    ) -> anyhow::Result<()>;
 }
 
 impl<'a> SweatContractInit for SweatContract<'a> {
-    async fn prepare_ft_contract(&self, postfix: &str, manager: &Account, alice: &Account, claim_contract_account: &Account) -> anyhow::Result<()> {
+    async fn prepare_ft_contract(
+        &self,
+        postfix: &str,
+        manager: &Account,
+        alice: &Account,
+        claim_contract_account: &Account,
+    ) -> anyhow::Result<()> {
         self.new(postfix.to_string().into()).await?;
-        
+
         self.add_oracle(&manager.to_near()).await?;
-    
-        self
-            .storage_deposit(claim_contract_account.to_near().into(), None)
+
+        self.storage_deposit(manager.to_near().into(), None).await?;
+        self.tge_mint(&manager.to_near(), U128(100_000_000)).await?;
+
+        self.storage_deposit(claim_contract_account.to_near().into(), None)
             .await?;
-    
+
         self.storage_deposit(alice.to_near().into(), None).await?;
         self.tge_mint(&alice.to_near(), U128(100_000_000)).await?;
-    
+
         Ok(())
     }
 }

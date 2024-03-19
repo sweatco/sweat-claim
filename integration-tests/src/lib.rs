@@ -8,9 +8,9 @@ use claim_model::{
 use integration_utils::misc::ToNear;
 use near_sdk::{
     json_types::{U128, U64},
-    serde_json::json,
-    AccountId,
+    serde_json::json, test_utils::test_env::alice,
 };
+use near_workspaces::types::NearToken;
 use sweat_model::{FungibleTokenCoreIntegration, Payout, SweatApiIntegration, SweatContract, SweatDeferIntegration};
 
 use crate::{
@@ -32,8 +32,8 @@ async fn happy_flow() -> anyhow::Result<()> {
     let alice_steps = 10_000;
     let alice_initial_balance = context.sweat_ft().ft_balance_of(alice.to_near()).await?;
 
-    let target_token_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
-    let target_payout = Payout::from(target_token_amount);
+    let target_sweat_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
+    let target_sweat_payout = Payout::from(target_sweat_amount);
 
     context
         .sweat_ft()
@@ -49,13 +49,13 @@ async fn happy_flow() -> anyhow::Result<()> {
         .ft_balance_of(context.sweat_claim().contract.as_account().to_near())
         .await?;
 
-    assert_eq!(claim_contract_balance.0, target_payout.amount_for_user);
+    assert_eq!(claim_contract_balance.0, target_sweat_payout.amount_for_user);
 
     let alice_deferred_balance = context
         .sweat_claim()
         .get_claimable_balance_for_account(alice.to_near())
         .await?;
-    assert_eq!(alice_deferred_balance.0, target_payout.amount_for_user);
+    assert_eq!(alice_deferred_balance.0, target_sweat_payout.amount_for_user);
 
     let is_claim_available = context.sweat_claim().is_claim_available(alice.to_near()).await?;
     assert!(matches!(is_claim_available, ClaimAvailabilityView::Unavailable(_)));
@@ -71,7 +71,7 @@ async fn happy_flow() -> anyhow::Result<()> {
 
     let alice_balance = context.sweat_ft().ft_balance_of(alice.to_near()).await?;
     let alice_balance_change = alice_balance.0 - alice_initial_balance.0;
-    assert_eq!(alice_balance_change, target_payout.amount_for_user);
+    assert_eq!(alice_balance_change, target_sweat_payout.amount_for_user);
 
     Ok(())
 }
@@ -91,8 +91,8 @@ async fn claim_multiple_assets() -> anyhow::Result<()> {
         .with_user(&manager)
         .await?;
 
-    let target_token_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
-    let target_payout = Payout::from(target_token_amount);
+    let target_sweat_amount = context.sweat_ft().formula(U64(0), alice_steps).await?.0;
+    let target_sweat_payout = Payout::from(target_sweat_amount);
     context
         .sweat_ft()
         .defer_batch(
@@ -101,6 +101,24 @@ async fn claim_multiple_assets() -> anyhow::Result<()> {
         )
         .with_user(&manager)
         .await?;
+
+    let target_usdt_amount = U128(1_000_000);
+    let defer_usdt_message = json!([[alice.to_near(), target_usdt_amount]]).to_string();
+
+    context
+        .usdt_ft()
+        .ft_transfer_call(
+            context.sweat_claim().contract.as_account().to_near(),
+            target_usdt_amount,
+            None,
+            defer_usdt_message,
+        )
+        .with_user(&manager)
+        .deposit(NearToken::from_yoctonear(1))
+        .await?;
+
+    let alice_deferred_balance = context.sweat_claim().get_claimable_balance_for_account(alice.to_near()).await?;
+    assert_eq!(alice_deferred_balance.0, target_sweat_payout.amount_for_user);
 
     Ok(())
 }

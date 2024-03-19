@@ -18,6 +18,7 @@ mod common;
 mod config;
 mod migration;
 mod record;
+mod receiver;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
 const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;

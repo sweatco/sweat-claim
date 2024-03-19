@@ -13,5 +13,6 @@ integration-test = []
 
 [dependencies]
 near-sdk = { workspace = true }
+near-contract-standards = { workspace = true }
 
 claim-model = { workspace = true }
