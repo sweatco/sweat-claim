@@ -1,7 +1,7 @@
-use claim_model::{AccrualIndex, UnixTimestamp};
+use claim_model::{AccrualIndex, Asset, UnixTimestamp};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 
-use crate::record::model::v1::AccountRecordV1;
+use crate::{common::AssetExt, record::model::v1::AccountRecordV1};
 
 #[derive(BorshDeserialize, BorshSerialize, Clone)]
 pub(crate) enum AccountRecordVersioned {
@@ -9,9 +9,15 @@ pub(crate) enum AccountRecordVersioned {
 }
 
 impl AccountRecordVersioned {
-    pub(crate) fn push(&mut self, accrual: (UnixTimestamp, AccrualIndex)) {
+    pub(crate) fn push(&mut self, accrual: (UnixTimestamp, AccrualIndex), asset: &Asset) {
         match self {
-            AccountRecordVersioned::V1(record) => record.accruals.push(accrual),
+            AccountRecordVersioned::V1(record) => if asset.is_default() {
+                &mut record.accruals
+            } else {
+                record.extra_accruals
+                    .get_mut(asset)
+                    .expect(format!("Asset {asset} is not registered").as_str())
+            }.push(accrual),
         }
     }
 }

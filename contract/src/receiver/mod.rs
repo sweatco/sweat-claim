@@ -10,7 +10,7 @@ use near_sdk::{
 
 use crate::{Contract, ContractExt};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "near_sdk::serde", tag = "type", content = "data", rename_all = "snake_case")]
 pub enum FtMessage {
     BatchRecord(Vec<(AccountId, U128)>),
@@ -18,7 +18,7 @@ pub enum FtMessage {
 
 #[near_bindgen]
 impl FungibleTokenReceiver for Contract {
-    fn ft_on_transfer(&mut self, _sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
+    fn ft_on_transfer(&mut self, sender_id: AccountId, amount: U128, msg: String) -> PromiseOrValue<U128> {
         let ft_message: FtMessage = serde_json::from_str(&msg).expect("Unable to deserialize msg");
 
         match ft_message {
@@ -29,7 +29,7 @@ impl FungibleTokenReceiver for Contract {
                 let asset = self
                     .get_asset_for_account(env::predecessor_account_id())
                     .expect("Unknown asset");
-                self.record_batch_for_hold(batch, Some(asset));
+                self.record_batch_for_hold_internal(batch, Some(asset));
             }
         }
 

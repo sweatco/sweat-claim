@@ -14,7 +14,7 @@ fn record_by_oracle() {
     context.switch_account(&accounts.oracle);
     contract.record_batch_for_hold(vec![(accounts.alice.clone(), U128(alice_balance_1))], None);
 
-    let alice_actual_balance = contract.get_claimable_balance_for_account(accounts.alice.clone());
+    let alice_actual_balance = contract.get_claimable_balance_for_account(accounts.alice.clone(), None);
     assert_eq!(alice_balance_1, alice_actual_balance.0);
 
     context.set_block_timestamp_in_seconds(1_000);
@@ -30,10 +30,10 @@ fn record_by_oracle() {
         None,
     );
 
-    let alice_actual_balance = contract.get_claimable_balance_for_account(accounts.alice.clone());
+    let alice_actual_balance = contract.get_claimable_balance_for_account(accounts.alice.clone(), None);
     assert_eq!(alice_balance_1 + alice_balance_2, alice_actual_balance.0);
 
-    let bob_actual_balance = contract.get_claimable_balance_for_account(accounts.bob.clone());
+    let bob_actual_balance = contract.get_claimable_balance_for_account(accounts.bob.clone(), None);
     assert_eq!(bob_balance, bob_actual_balance.0);
 }
 
@@ -68,7 +68,7 @@ fn test_multiple_records_in_the_same_block() {
 
     for index in 0..target_accruals.len() {
         let account = target_accounts.get(index).unwrap();
-        let balance = contract.get_claimable_balance_for_account(account.clone());
+        let balance = contract.get_claimable_balance_for_account(account.clone(), None);
         assert_eq!(balance.0, target_accruals.get(index).unwrap().clone());
     }
 }

@@ -173,7 +173,7 @@ pub trait ClaimApi {
     ///
     /// Returns a `U128` value indicating the amount of claimable tokens for the provided
     /// `account_id`.
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128;
+    fn get_claimable_balance_for_account(&self, account_id: AccountId, asset: Option<Asset>) -> U128;
 
     /// Checks if the claim is available for a specified account.
     ///

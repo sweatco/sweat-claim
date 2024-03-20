@@ -85,6 +85,7 @@ pub async fn prepare_contract() -> anyhow::Result<Context> {
         .add_oracle(context.sweat_ft().contract.as_account().to_near())
         .await?;
     context.sweat_claim().add_oracle(manager.to_near()).await?;
+    context.sweat_claim().add_oracle(context.sweat_claim().contract.as_account().to_near()).await?;
 
     context
         .sweat_claim()

@@ -1,34 +1,42 @@
 use claim_model::{
     api::ClaimApi,
     event::{emit, ClaimData, EventKind},
-    ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
+    AccrualsReference, Asset, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
-use near_sdk::{env, json_types::U128, near_bindgen, require, store::Vector, AccountId, PromiseOrValue};
+use near_sdk::{
+    env::{self, log_str},
+    json_types::U128,
+    near_bindgen, require,
+    store::Vector,
+    AccountId, PromiseOrValue,
+};
 
 use crate::{
-    common::{now_seconds, UnixTimestampExtension},
+    common::{now_seconds, AssetExt, UnixTimestampExtension},
     get_default_asset,
-    record::model::versioned::AccountRecordVersioned,
+    record::model::versioned::{AccountRecord, AccountRecordVersioned},
     Contract, ContractExt,
     StorageKey::AccrualsEntry,
 };
 
 #[near_bindgen]
 impl ClaimApi for Contract {
-    fn get_claimable_balance_for_account(&self, account_id: AccountId) -> U128 {
+    fn get_claimable_balance_for_account(&self, account_id: AccountId, asset: Option<Asset>) -> U128 {
+        let asset = asset.unwrap_or(get_default_asset()).normalize();
         let Some(account_data) = self.get_account(&account_id) else {
             return U128(0);
         };
 
         let mut total_accrual = 0;
         let now = now_seconds();
+        let accruals = account_data.get_accruals(&asset);
 
-        for (datetime, index) in &account_data.accruals {
+        for (datetime, index) in accruals {
             if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
-            let Some((accruals, _)) = self.accruals.get(datetime) else {
+            let Some((accruals, _)) = self.get_accruals(&asset).get(datetime) else {
                 continue;
             };
 
@@ -99,7 +107,7 @@ impl ClaimApi for Contract {
             self.transfer_external(now, account_id, total_accrual, details)
         } else {
             account_data.is_locked = false;
-            PromiseOrValue::Value(ClaimResultView::new(get_default_asset(), true, Some(0)))
+            PromiseOrValue::Value(ClaimResultView::new(get_default_asset().normalize(), true, Some(0)))
         }
     }
 }
@@ -121,7 +129,7 @@ impl Contract {
 
             let event_data = ClaimData {
                 account_id,
-                asset: get_default_asset(),
+                asset: get_default_asset().normalize(),
                 details: details
                     .iter()
                     .map(|(timestamp, amount)| (*timestamp, U128(*amount)))
@@ -130,7 +138,7 @@ impl Contract {
             };
             emit(EventKind::Claim(event_data));
 
-            return ClaimResultView::new(get_default_asset(), true, Some(total_accrual));
+            return ClaimResultView::new(get_default_asset().normalize(), true, Some(total_accrual));
         }
 
         for (timestamp, amount) in details {
@@ -145,7 +153,21 @@ impl Contract {
             account.accruals.push((timestamp, daily_accruals.0.len() - 1));
         }
 
-        ClaimResultView::new(get_default_asset(), false, None)
+        ClaimResultView::new(get_default_asset().normalize(), false, None)
+    }
+}
+
+static EMPTY_ACCRUALS: AccrualsReference = Vec::new();
+
+impl AccountRecord {
+    pub(crate)fn get_accruals(&self, asset: &Asset) -> &AccrualsReference {
+        if asset.is_default() {
+            &self.accruals
+        } else {
+            self.extra_accruals
+                .get(asset)
+                .unwrap_or(&EMPTY_ACCRUALS)
+        }
     }
 }
 

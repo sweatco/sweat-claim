@@ -19,6 +19,8 @@ use crate::{
     *,
 };
 
+use self::common::AssetExt;
+
 const EXT_TRANSFER_ALL_FUTURE: &str = "ext_transfer_all";
 
 #[near_bindgen]
@@ -59,7 +61,7 @@ impl Contract {
         let now = now_seconds();
         let details = &mut HashMap::<Asset, ClaimDetails>::new();
 
-        self.collect_claim_details(details, now, &get_default_asset(), &account_data.accruals);
+        self.collect_claim_details(details, now, &get_default_asset().normalize(), &account_data.accruals);
         for (asset, accruals) in &account_data.extra_accruals {
             self.collect_claim_details(details, now, asset, accruals);
         }
@@ -194,19 +196,19 @@ impl Contract {
             .or_insert_with(|| (Vector::new(AccrualsEntry(*timestamp)), 0))
     }
 
-    fn get_accruals(&self, asset: &Asset) -> &AccrualsMap {
+    pub(crate)fn get_accruals(&self, asset: &Asset) -> &AccrualsMap {
         if *asset == get_default_asset() {
             &self.accruals
         } else {
-            self.extra_accruals.get(asset).expect("Asset not found")
+            self.extra_accruals.get(asset).expect(format!("Asset {asset} not found").as_str())
         }
     }
 
-    fn get_accruals_mut(&mut self, asset: &Asset) -> &mut AccrualsMap {
-        if *asset == get_default_asset() {
+    pub(crate) fn get_accruals_mut(&mut self, asset: &Asset) -> &mut AccrualsMap {
+        if asset.is_default() {
             &mut self.accruals
         } else {
-            self.extra_accruals.get_mut(asset).expect("Asset not found")
+            self.extra_accruals.get_mut(asset).expect(format!("Asset {asset} not found").as_str())
         }
     }
 

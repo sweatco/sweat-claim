@@ -35,10 +35,10 @@ fn test_burn_when_outdated_tokens_exist() {
 
     assert_eq!(alice_balance + bob_balance, burnt_amount);
 
-    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice).0;
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice, None).0;
     assert_eq!(0, alice_new_balance);
 
-    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
+    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob, None).0;
     assert_eq!(0, bob_new_balance);
 
     assert!(!contract.is_service_call_running);
@@ -71,10 +71,10 @@ fn test_ext_error_on_burn_when_outdated_tokens_exist() {
 
     assert_eq!(0, burnt_amount);
 
-    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice).0;
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice, None).0;
     assert_eq!(0, alice_new_balance);
 
-    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
+    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob, None).0;
     assert_eq!(0, bob_new_balance);
 
     assert!(!contract.is_service_call_running);
@@ -105,10 +105,10 @@ fn test_burn_when_outdated_tokens_do_not_exist() {
 
     assert_eq!(0, burnt_amount);
 
-    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice).0;
+    let alice_new_balance = contract.get_claimable_balance_for_account(accounts.alice, None).0;
     assert_eq!(alice_balance, alice_new_balance);
 
-    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob).0;
+    let bob_new_balance = contract.get_claimable_balance_for_account(accounts.bob, None).0;
     assert_eq!(bob_balance, bob_new_balance);
 
     assert!(!contract.is_service_call_running);

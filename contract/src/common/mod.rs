@@ -1,8 +1,9 @@
-use claim_model::{Duration, UnixTimestamp};
+use claim_model::{Asset, Duration, UnixTimestamp};
 use near_sdk::env::{block_timestamp_ms, panic_str};
 
 #[cfg(test)]
 use crate::common::tests::data::get_test_future_success;
+use crate::get_default_asset;
 
 mod asserts;
 pub(crate) mod tests;
@@ -51,4 +52,20 @@ fn convert_milliseconds_to_unix_timestamp_successfully() {
 fn convert_milliseconds_to_unix_timestamp_with_unsuccessfully() {
     let millis: u64 = u64::MAX;
     let _timestamp = ms_timestamp_to_seconds(millis);
+}
+
+pub(crate) trait AssetExt {
+    fn is_default(&self) -> bool;
+
+    fn normalize(&self) -> Self;
+}
+
+impl AssetExt for Asset {
+    fn is_default(&self) -> bool {
+        self.normalize() == get_default_asset().normalize()
+    }
+
+    fn normalize(&self) -> Self {
+        self.to_lowercase()
+    }
 }
