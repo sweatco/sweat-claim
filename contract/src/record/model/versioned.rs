@@ -1,3 +1,5 @@
+use std::{collections::HashMap, hash::Hash};
+
 use claim_model::{AccrualIndex, Asset, UnixTimestamp};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 
@@ -14,10 +16,13 @@ impl AccountRecordVersioned {
             AccountRecordVersioned::V1(record) => if asset.is_default() {
                 &mut record.accruals
             } else {
-                record.extra_accruals
-                    .get_mut(asset)
-                    .expect(format!("Asset {asset} is not registered").as_str())
-            }.push(accrual),
+                if !record.extra_accruals.contains_key(asset) {
+                    record.extra_accruals.insert(asset.clone(), vec![]);
+                }
+
+                record.extra_accruals.get_mut(asset).unwrap()
+            }
+            .push(accrual),
         }
     }
 }

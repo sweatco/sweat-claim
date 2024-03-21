@@ -29,14 +29,16 @@ impl ClaimApi for Contract {
 
         let mut total_accrual = 0;
         let now = now_seconds();
-        let accruals = account_data.get_accruals(&asset);
+        
+        let accruals = self.accruals.get_accruals(&asset);
+        let account_accruals = account_data.get_accruals(&asset);
 
-        for (datetime, index) in accruals {
+        for (datetime, index) in account_accruals {
             if !datetime.is_within_period(now, self.burn_period) {
                 continue;
             }
 
-            let Some((accruals, _)) = self.accruals.get_accruals(&asset).get(datetime) else {
+            let Some((accruals, _)) = accruals.get(datetime) else {
                 continue;
             };
 
