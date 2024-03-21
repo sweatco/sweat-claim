@@ -67,15 +67,11 @@ impl Contract {
         let now_seconds = now_seconds();
         let mut event_data = RecordData::new(now_seconds);
 
-        let balances = if asset.is_default() {
-            &mut self.accruals
-        } else {
-            self.extra_accruals
-                .get_mut(&asset)
-                .expect(format!("Asset {asset} not found").as_str())
-        }
-        .entry(now_seconds)
-        .or_insert_with(|| (Vector::new(AccrualsEntry(now_seconds)), 0));
+        let balances = self
+            .accruals
+            .get_accruals_mut(&asset)
+            .entry(now_seconds)
+            .or_insert_with(|| (Vector::new(AccrualsEntry(now_seconds)), 0));
 
         for (account_id, amount) in &amounts {
             event_data.amounts.push((account_id.clone(), *amount));

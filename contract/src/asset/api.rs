@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use claim_model::{api::AssetsApi, Asset};
-use near_sdk::{env::log_str, near_bindgen, store::UnorderedMap, AccountId};
+use near_sdk::{near_bindgen, store::UnorderedMap, AccountId};
 
-use crate::{common::AssetExt, get_default_asset, Contract, ContractExt, StorageKey};
+use crate::{common::AssetExt, Contract, ContractExt, StorageKey};
 
 #[near_bindgen]
 impl AssetsApi for Contract {
@@ -16,8 +16,8 @@ impl AssetsApi for Contract {
 
         self.assert_oracle();
         self.assets.insert(asset.clone(), contract_id);
-        self.extra_accruals
-            .insert(asset.clone(), UnorderedMap::new(StorageKey::ExtraAccrualsEntry(asset)));
+        self.accruals.extra.insert(asset.clone(), UnorderedMap::new(StorageKey::ExtraAccrualsEntry(asset)));
+            
     }
 }
 

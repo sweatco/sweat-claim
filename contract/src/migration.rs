@@ -6,7 +6,7 @@ use near_sdk::{
     AccountId, PanicOnDefault,
 };
 
-use crate::{record::model::legacy::AccountRecordLegacy, Contract, ContractExt, StorageKey};
+use crate::{record::model::legacy::AccountRecordLegacy, Accruals, Contract, ContractExt, StorageKey};
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -34,8 +34,10 @@ impl Contract {
             oracles: old_state.oracles,
             claim_period: old_state.claim_period,
             burn_period: old_state.burn_period,
-            accruals: old_state.accruals,
-            extra_accruals: LookupMap::new(StorageKey::ExtraAccruals),
+            accruals: Accruals {
+                default: old_state.accruals,
+                extra: LookupMap::new(StorageKey::ExtraAccruals),
+            },
             accounts_legacy: old_state.accounts,
             accounts: LookupMap::new(StorageKey::Accounts),
             is_service_call_running: old_state.is_service_call_running,

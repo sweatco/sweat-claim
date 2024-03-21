@@ -23,7 +23,7 @@ impl BurnApi for Contract {
         let mut keys_to_remove = vec![];
         let now = now_seconds();
 
-        for (datetime, (_, total)) in self.accruals.iter() {
+        for (datetime, (_, total)) in self.accruals.default.iter() {
             if !datetime.is_within_period(now, self.burn_period) {
                 keys_to_remove.push(*datetime);
                 total_to_burn += total;
@@ -54,7 +54,7 @@ impl Contract {
         }
 
         for datetime in keys_to_remove {
-            self.accruals.remove(&datetime);
+            self.accruals.default.remove(&datetime);
         }
 
         emit(EventKind::Burn(BurnData {

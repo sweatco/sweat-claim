@@ -36,7 +36,7 @@ impl ClaimApi for Contract {
                 continue;
             }
 
-            let Some((accruals, _)) = self.get_accruals(&asset).get(datetime) else {
+            let Some((accruals, _)) = self.accruals.get_accruals(&asset).get(datetime) else {
                 continue;
             };
 
@@ -86,7 +86,7 @@ impl ClaimApi for Contract {
                 continue;
             }
 
-            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
+            let Some((accruals, total)) = self.accruals.default.get_mut(datetime) else {
                 continue;
             };
 
@@ -144,6 +144,7 @@ impl Contract {
         for (timestamp, amount) in details {
             let daily_accruals = self
                 .accruals
+                .default
                 .entry(timestamp)
                 .or_insert_with(|| (Vector::new(AccrualsEntry(timestamp)), 0));
 

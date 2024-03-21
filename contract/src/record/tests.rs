@@ -60,7 +60,7 @@ fn test_multiple_records_in_the_same_block() {
     contract.record_batch_for_hold(batches.get(0).unwrap().clone(), None);
     contract.record_batch_for_hold(batches.get(1).unwrap().clone(), None);
 
-    let accruals = contract.accruals.get(&0).unwrap();
+    let accruals = contract.accruals.default.get(&0).unwrap();
     assert_eq!(accruals.0.len(), target_accruals.len() as u32);
     assert_eq!(accruals.1, target_accruals.iter().sum::<u128>());
 

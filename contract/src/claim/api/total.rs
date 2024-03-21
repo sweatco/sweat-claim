@@ -181,7 +181,8 @@ impl Contract {
     }
 
     fn get_daily_accruals(&self, asset: &Asset, timestamp: &UnixTimestamp) -> &(Vector<TokensAmount>, TokensAmount) {
-        self.get_accruals(asset)
+        self.accruals
+            .get_accruals(asset)
             .get(timestamp)
             .expect("Daily accruals not found")
     }
@@ -191,25 +192,10 @@ impl Contract {
         asset: &Asset,
         timestamp: &UnixTimestamp,
     ) -> &mut (Vector<TokensAmount>, TokensAmount) {
-        self.get_accruals_mut(asset)
+        self.accruals
+            .get_accruals_mut(asset)
             .entry(*timestamp)
             .or_insert_with(|| (Vector::new(AccrualsEntry(*timestamp)), 0))
-    }
-
-    pub(crate)fn get_accruals(&self, asset: &Asset) -> &AccrualsMap {
-        if *asset == get_default_asset() {
-            &self.accruals
-        } else {
-            self.extra_accruals.get(asset).expect(format!("Asset {asset} not found").as_str())
-        }
-    }
-
-    pub(crate) fn get_accruals_mut(&mut self, asset: &Asset) -> &mut AccrualsMap {
-        if asset.is_default() {
-            &mut self.accruals
-        } else {
-            self.extra_accruals.get_mut(asset).expect(format!("Asset {asset} not found").as_str())
-        }
     }
 
     fn clear_all_accruals(&mut self, account_id: &AccountId) {
@@ -232,7 +218,7 @@ impl Contract {
                 continue;
             }
 
-            let Some((accruals, total)) = self.accruals.get_mut(datetime) else {
+            let Some((accruals, total)) = self.accruals.get_accruals_mut(asset).get_mut(datetime) else {
                 continue;
             };
 

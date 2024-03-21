@@ -1,4 +1,5 @@
-use claim_model::{api::InitApi, AccrualsMap, Asset, Duration};
+use claim_model::{api::InitApi, AccrualsMap, AccrualsReference, Asset, Duration};
+use common::AssetExt;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     near_bindgen,
@@ -17,8 +18,8 @@ mod clean;
 mod common;
 mod config;
 mod migration;
-mod record;
 mod receiver;
+mod record;
 
 const INITIAL_CLAIM_PERIOD_MS: u32 = 24 * 60 * 60;
 const INITIAL_BURN_PERIOD_MS: u32 = 30 * 24 * 60 * 60;
@@ -76,8 +77,7 @@ pub struct Contract {
     ///  │     [(1705066501, 2)]        │
     ///  └────────────┘      └──────────┘
     /// ```
-    accruals: AccrualsMap,
-    extra_accruals: LookupMap<Asset, AccrualsMap>,
+    accruals: Accruals,
 
     /// TODO: Update docs
     /// A map containing accrual and service details for each user account.
@@ -128,14 +128,46 @@ impl InitApi for Contract {
 
             accounts_legacy: LookupMap::new(StorageKey::AccountsLegacy),
             accounts: LookupMap::new(StorageKey::Accounts),
-            accruals: UnorderedMap::new(StorageKey::Accruals),
-            extra_accruals: LookupMap::new(StorageKey::ExtraAccruals),
+            accruals: Accruals {
+                default: UnorderedMap::new(StorageKey::Accruals),
+                extra: LookupMap::new(StorageKey::ExtraAccruals),
+            },
             oracles: UnorderedSet::new(StorageKey::Oracles),
 
             claim_period: INITIAL_CLAIM_PERIOD_MS,
             burn_period: INITIAL_BURN_PERIOD_MS,
 
             is_service_call_running: false,
+        }
+    }
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub(crate) struct Accruals {
+    pub(crate) default: AccrualsMap,
+    pub(crate) extra: LookupMap<Asset, AccrualsMap>,
+}
+
+static EMPTY_ACCRUALS: AccrualsReference = Vec::new();
+
+impl Accruals {
+    pub(crate) fn get_accruals(&self, asset: &Asset) -> &AccrualsMap {
+        if asset.is_default() {
+            &self.default
+        } else {
+            self.extra
+                .get(asset)
+                .expect(format!("Asset {asset} is not registered").as_str())
+        }
+    }
+
+    pub(crate) fn get_accruals_mut(&mut self, asset: &Asset) -> &mut AccrualsMap {
+        if asset.is_default() {
+            &mut self.default
+        } else {
+            self.extra
+                .get_mut(asset)
+                .expect(format!("Asset {asset} is not registered").as_str())
         }
     }
 }
