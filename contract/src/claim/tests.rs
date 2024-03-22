@@ -1,14 +1,17 @@
 #![cfg(test)]
 
 use claim_model::{
-    api::{AssetsApi, ClaimApi, RecordApi},
-    Asset, ClaimAvailabilityView, UnixTimestamp,
+    api::{AssetsApi, ClaimApi, ClaimTotalApi, RecordApi},
+    Asset, ClaimAvailabilityView, ClaimResultView, UnixTimestamp,
 };
 use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
 
 use crate::{
     claim::api::single::test::EXT_TRANSFER_FUTURE,
-    common::tests::{data::set_test_future_success, Context},
+    common::{
+        tests::{data::set_test_future_success, Context},
+        AssetExt,
+    }, get_default_asset,
 };
 
 #[test]
@@ -261,6 +264,26 @@ fn test_claim_when_user_has_claimable_balance_for_multiple_tokens() {
     assert_eq!(alice_default_token_new_balance.0, alice_default_token_balance);
 
     let alice_extra_token_new_balance =
-        contract.get_claimable_balance_for_account(accounts.alice.clone(), Some(extra_asset));
+        contract.get_claimable_balance_for_account(accounts.alice.clone(), Some(extra_asset.clone()));
     assert_eq!(alice_extra_token_new_balance.0, alice_extra_token_balance);
+
+    context.set_block_timestamp_in_seconds((contract.claim_period + 1) as _);
+
+    context.switch_account(&accounts.alice);
+    let PromiseOrValue::Value(claim_result) = contract.claim_all() else {
+        panic!("Expected value");
+    };
+    assert_eq!(2, claim_result.len());
+
+    assert!(claim_result.contains(&ClaimResultView::new(
+        get_default_asset().normalize(),
+        true,
+        Some(alice_default_token_balance),
+    )));
+
+    assert!(claim_result.contains(&ClaimResultView::new(
+        extra_asset.normalize(),
+        true,
+        Some(alice_extra_token_balance),
+    )));
 }
