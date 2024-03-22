@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use claim_model::{
-    api::ClaimApi,
+    api::{ClaimApi, ClaimTotalApi},
     event::{emit, ClaimData, EventKind},
     AccrualsReference, ClaimAllResultView, ClaimAvailabilityView, ClaimResultView, TokensAmount, UnixTimestamp,
 };
@@ -24,8 +24,8 @@ use self::common::AssetExt;
 const EXT_TRANSFER_ALL_FUTURE: &str = "ext_transfer_all";
 
 #[near_bindgen]
-impl Contract {
-    pub fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
+impl ClaimTotalApi for Contract {
+    fn claim_all(&mut self) -> PromiseOrValue<ClaimAllResultView> {
         let account_id = env::predecessor_account_id();
 
         require!(
@@ -50,7 +50,9 @@ impl Contract {
             )
         }
     }
+}
 
+impl Contract {
     fn collect_accruals(&mut self, account_id: &AccountId) -> Vec<Claim> {
         let AccountRecordVersioned::V1(account_data) = self
             .accounts

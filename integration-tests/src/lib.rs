@@ -2,7 +2,9 @@
 
 use anyhow::Result;
 use claim_model::{
-    api::{AssetsApiIntegration, BurnApiIntegration, ClaimApiIntegration},
+    api::{
+        AssetsApiIntegration, BurnApiIntegration, ClaimApiIntegration, ClaimTotalApiIntegration, ConfigApiIntegration,
+    },
     ClaimAvailabilityView,
 };
 use integration_utils::misc::ToNear;
@@ -85,6 +87,8 @@ async fn claim_multiple_assets() -> anyhow::Result<()> {
 
     let alice_steps = 10_000;
 
+    context.sweat_claim().set_claim_period(0).with_user(&manager).await?;
+
     context
         .sweat_claim()
         .register_asset("USDT".to_string(), context.usdt_ft().contract.as_account().to_near())
@@ -135,6 +139,40 @@ async fn claim_multiple_assets() -> anyhow::Result<()> {
         .get_claimable_balance_for_account(alice.to_near(), Some("USDT".to_string()))
         .await?;
     assert_eq!(alice_deferred_usdt_balance.0, target_usdt_amount.0);
+
+    let claim_result = context.sweat_claim().claim_all().with_user(&alice).await?;
+
+    let sweat_claim_result = claim_result
+        .iter()
+        .find(|&item| item.asset.eq_ignore_ascii_case("SWEAT"))
+        .expect("No SWEAT claim result found.");
+    assert!(sweat_claim_result.is_success);
+    assert_eq!(
+        alice_deferred_sweat_balance,
+        sweat_claim_result.total.expect("No total balance for SWEAT claim")
+    );
+
+    let usdt_claim_result = claim_result
+        .iter()
+        .find(|&item| item.asset.eq_ignore_ascii_case("USDT"))
+        .expect("No USDT claim result found.");
+    assert!(usdt_claim_result.is_success);
+    assert_eq!(
+        alice_deferred_usdt_balance,
+        usdt_claim_result.total.expect("No total balance for SWEAT claim")
+    );
+
+    let alice_deferred_sweat_balance_after_claim = context
+        .sweat_claim()
+        .get_claimable_balance_for_account(alice.to_near(), None)
+        .await?;
+    assert_eq!(alice_deferred_sweat_balance_after_claim.0, 0);
+
+    let alice_deferred_usdt_balance_after_claim = context
+        .sweat_claim()
+        .get_claimable_balance_for_account(alice.to_near(), Some("USDT".to_string()))
+        .await?;
+    assert_eq!(alice_deferred_usdt_balance_after_claim.0, 0);
 
     Ok(())
 }
