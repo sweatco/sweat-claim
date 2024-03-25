@@ -1,11 +1,10 @@
-use async_trait::async_trait;
 use claim_model::{
     api::{AuthApiIntegration, ClaimContract, ConfigApiIntegration, InitApiIntegration},
     Duration,
 };
-use integration_utils::misc::ToNear;
 use near_sdk::json_types::U128;
 use near_workspaces::Account;
+use nitka::misc::ToNear;
 use sweat_model::{StorageManagementIntegration, SweatApiIntegration, SweatContract};
 
 const FT_CONTRACT: &str = "sweat";
@@ -14,9 +13,8 @@ const SWEAT_CLAIM: &str = "sweat_claim";
 pub const CLAIM_PERIOD: Duration = 30 * 60;
 pub const BURN_PERIOD: Duration = 3 * 60 * 60;
 
-pub type Context = integration_utils::context::Context<near_workspaces::network::Sandbox>;
+pub type Context = nitka::context::Context<near_workspaces::network::Sandbox>;
 
-#[async_trait]
 pub trait IntegrationContext {
     async fn manager(&mut self) -> anyhow::Result<Account>;
     async fn alice(&mut self) -> anyhow::Result<Account>;
@@ -24,7 +22,6 @@ pub trait IntegrationContext {
     fn ft_contract(&self) -> SweatContract;
 }
 
-#[async_trait]
 impl IntegrationContext for Context {
     async fn manager(&mut self) -> anyhow::Result<Account> {
         self.account("manager").await

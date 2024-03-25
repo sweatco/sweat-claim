@@ -22,8 +22,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 pkg-config = "0.3.28"
 
 [dependencies]
-async-trait = { workspace = true }
 
-claim-model = { workspace = true, features = ["integration-test"] }
-sweat-model = { workspace = true, features = ["integration-test"] }
-integration-utils = { workspace = true }
+claim-model = { workspace = true, features = ["integration-test", "integration-api"] }
+sweat-model = { workspace = true, features = ["integration-api"] }
+nitka = { workspace = true }

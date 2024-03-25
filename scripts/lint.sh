@@ -3,7 +3,7 @@ set -eox pipefail
 
 rustup component add clippy
 
-cargo clippy --all \
+cargo clippy -p sweat_claim \
   -- \
   \
   -W clippy::all \

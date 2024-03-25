@@ -1,5 +1,9 @@
-use integration_trait::make_integration_version;
-use near_sdk::{json_types::U128, AccountId, PromiseOrValue};
+#[cfg(feature = "release-api")]
+use near_sdk::AccountId;
+use near_sdk::{json_types::U128, PromiseOrValue};
+#[cfg(feature = "integration-api")]
+use nitka::AccountId;
+use nitka_proc::make_integration_version;
 
 use crate::{ClaimAvailabilityView, ClaimResultView, Duration};
 
