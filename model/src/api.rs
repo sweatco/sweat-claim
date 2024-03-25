@@ -133,7 +133,7 @@ pub trait BurnApi {
     /// authority to initiate the burn process.
     ///
     /// Panics if another service call is running.
-    fn burn(&mut self) -> PromiseOrValue<U128>;
+    fn burn(&mut self, asset: Option<Asset>) -> PromiseOrValue<U128>;
 }
 
 /// An API for recording (updating) user balances in the smart contract.
